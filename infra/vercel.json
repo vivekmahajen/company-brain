@@ -1,9 +1,16 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "next build",
-  "framework": "nextjs",
-  "rootDirectory": "apps/web",
-  "env": {
-    "NEXT_PUBLIC_API_URL": "https://<your-railway-api>/api"
-  }
+  "_comment": [
+    "This repo is a monorepo; the Next.js console lives in apps/web.",
+    "Vercel's Root Directory is a PROJECT SETTING (not a vercel.json key) and",
+    "Vercel only reads vercel.json from inside the configured root directory.",
+    "So this file is documentation only — the live config is apps/web/vercel.json.",
+    "",
+    "To deploy correctly:",
+    "  1. Vercel project -> Settings -> General -> Root Directory = apps/web",
+    "  2. Vercel project -> Settings -> Environment Variables:",
+    "       NEXT_PUBLIC_API_URL = https://<your-railway-api-host>/api",
+    "  3. Redeploy.",
+    "A platform 404 at '/' means step 1 was not applied (Vercel built from the",
+    "repo root and found no Next.js app)."
+  ]
 }
