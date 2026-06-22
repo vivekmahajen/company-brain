@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# Databases / local state
+*.db
+*.sqlite3
+
+# Env / secrets
+.env
+.env.*
+!.env.local.example
+!*.env.example
+
+# Node / Next
+node_modules/
+apps/web/.next/
+apps/web/out/
+next-env.d.ts
+
+# OS
+.DS_Store

@@ -1,0 +1,13 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "build": {
+    "builder": "NIXPACKS",
+    "buildCommand": "pip install -r apps/api/requirements.txt"
+  },
+  "deploy": {
+    "startCommand": "uvicorn apps.api.main:app --host 0.0.0.0 --port $PORT",
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 5
+  },
+  "notes": "Set DATABASE_URL (Postgres+pgvector), LLM_PROVIDER=anthropic, ANTHROPIC_API_KEY. Run infra/migrations/0001_init.sql once."
+}

@@ -1,0 +1,101 @@
+"""M2 — Extraction & structuring.
+
+Turn raw artifacts into typed knowledge_units with provenance. A cheap Haiku
+pre-classifier gates whether an artifact is knowledge-bearing before spending
+Opus tokens. Every unit carries an embedding, a confidence, and >=1 provenance
+row (quote_span). Below-threshold units land as `needs_review` (M8 gating);
+others as `approved`.
+"""
+from __future__ import annotations
+
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from apps.api.config import get_settings
+from apps.api.llm.base import Usage, get_llm
+from apps.api.llm.embeddings import embed
+from apps.api.llm.prompts import EXTRACTION_SYSTEM
+from apps.api.models.tables import KU_TYPES, Artifact, KnowledgeUnit, KUProvenance
+
+
+def extract_artifact(db: Session, artifact: Artifact, *, llm=None) -> list[KnowledgeUnit]:
+    llm = llm or get_llm()
+    settings = get_settings()
+
+    # Cheap gate: is this artifact knowledge-bearing at all?
+    label = llm.classify(text=artifact.content_text, labels=["knowledge", "chatter"])
+    if label != "knowledge":
+        return []
+
+    # Document-level topic so units that don't repeat the keyword (e.g. a
+    # guardrail, a bare procedure step) still attach to the right capability.
+    doc_topic = "refund" if "refund" in artifact.content_text.lower() else None
+
+    resp = llm.complete_json(
+        system=EXTRACTION_SYSTEM,
+        prompt="Extract typed knowledge units.",
+        model=settings.model_extract,
+        context={
+            "task": "extract",
+            "artifact_text": artifact.content_text,
+            "occurred_at": str(artifact.occurred_at) if artifact.occurred_at else None,
+            "topic": doc_topic,
+        },
+    )
+    units_raw = resp.data.get("units", []) if isinstance(resp.data, dict) else []
+
+    created: list[KnowledgeUnit] = []
+    for u in units_raw:
+        ku_type = u.get("type")
+        if ku_type not in KU_TYPES:
+            continue
+        statement = (u.get("statement") or "").strip()
+        if not statement:
+            continue
+        confidence = float(u.get("confidence", 0.5))
+        status = "approved" if confidence >= settings.confidence_review_threshold else "needs_review"
+        ku = KnowledgeUnit(
+            org_id=artifact.org_id,
+            type=ku_type,
+            statement=statement,
+            payload_jsonb=u.get("payload", {}),
+            embedding=embed(statement),
+            confidence=confidence,
+            status=status,
+            valid_from=artifact.occurred_at,
+            topic=u.get("topic") or doc_topic,
+        )
+        db.add(ku)
+        db.flush()
+        # No fact without provenance.
+        db.add(
+            KUProvenance(
+                knowledge_unit_id=ku.id,
+                artifact_id=artifact.id,
+                quote_span=u.get("quote_span", statement),
+                extracted_by=f"{settings.llm_provider}:{settings.model_extract}",
+            )
+        )
+        created.append(ku)
+    db.flush()
+    return created
+
+
+def extract_pending(db: Session, org_id: str) -> dict:
+    """Extract from all artifacts that have no KUs yet."""
+    llm = get_llm()
+    artifacts = db.scalars(select(Artifact).where(Artifact.org_id == org_id)).all()
+    existing_artifact_ids = {
+        p.artifact_id for p in db.scalars(select(KUProvenance)).all()
+    }
+    total_units = 0
+    processed = 0
+    total_usage = Usage()
+    for art in artifacts:
+        if art.id in existing_artifact_ids:
+            continue
+        units = extract_artifact(db, art, llm=llm)
+        total_units += len(units)
+        processed += 1
+    db.commit()
+    return {"artifacts_processed": processed, "units_created": total_units, "cost_usd": total_usage.cost_usd}

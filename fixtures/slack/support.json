@@ -1,0 +1,26 @@
+{
+  "channel": "#support",
+  "messages": [
+    {
+      "ts": "1709899200.0001",
+      "id": "slack-support-1",
+      "user": "maya@acme.com",
+      "occurred_at": "2026-03-08T12:00:00Z",
+      "text": "btw any refund inside the 30 day window we just auto-approve, no need to ask anyone."
+    },
+    {
+      "ts": "1710144000.0002",
+      "id": "slack-support-2",
+      "user": "raj@acme.com",
+      "occurred_at": "2026-03-11T09:30:00Z",
+      "text": "Customer was furious, order #1234 was 40 days old and $620. We made an exception and approved the refund after manager sign-off. Going forward, refunds above $500 require manager sign-off."
+    },
+    {
+      "ts": "1710150000.0003",
+      "id": "slack-support-3",
+      "user": "raj@acme.com",
+      "occurred_at": "2026-03-11T11:00:00Z",
+      "text": "lol the coffee machine is broken again, who do I ping about that"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "pages": [
+    {
+      "id": "notion-refund-policy",
+      "title": "Refund Policy",
+      "author": "ops@acme.com",
+      "last_edited": "2026-01-15T10:00:00Z",
+      "content": "Refunds within 30 days of purchase are automatically approved.\nRefund requests above $500 require manager sign-off.\nNever refund an order older than 90 days without manager approval.\nNever exceed the original charge amount.\nTo process a refund:\n1. Look up the order by order_id.\n2. Verify the purchase date and amount.\n3. If eligible, issue the refund via Stripe and update the support ticket.\nEscalation: route unresolved cases to the #refund-approvals channel with order, amount, reason, and policy citation."
+    },
+    {
+      "id": "notion-refund-policy-old",
+      "title": "Refund Policy (legacy)",
+      "author": "ops@acme.com",
+      "last_edited": "2025-08-01T10:00:00Z",
+      "content": "Refund requests above $300 require manager sign-off."
+    }
+  ]
+}
