@@ -1,11 +1,11 @@
 {
   "$schema": "https://railway.app/railway.schema.json",
+  "_note": "Railway reads the root railway.json; this is a reference copy. The start command is intentionally NOT set here so the Dockerfile CMD (sh -c with ${PORT:-8000}) runs and expands $PORT. Do not set a Custom Start Command of `--port $PORT` in the dashboard — Railway runs it without shell expansion.",
   "build": {
     "builder": "DOCKERFILE",
     "dockerfilePath": "Dockerfile"
   },
   "deploy": {
-    "startCommand": "uvicorn apps.api.main:app --host 0.0.0.0 --port $PORT",
     "healthcheckPath": "/health",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 5

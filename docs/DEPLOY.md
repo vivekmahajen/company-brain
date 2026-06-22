@@ -54,6 +54,15 @@ Railway builds the API directly.
    curl -X POST https://<your-api>.up.railway.app/api/pipeline/run
    ```
 
+### Troubleshooting
+
+- **`Invalid value for '--port': '$PORT' is not a valid integer`** — a start
+  command of `uvicorn … --port $PORT` was run without shell expansion. Don't set
+  a Custom Start Command in Railway and don't put one in `railway.json`; the
+  Dockerfile's `CMD` (`sh -c "… --port ${PORT:-8000}"`) expands `$PORT` itself
+  and defaults to 8000. If you previously set a Custom Start Command in the
+  dashboard, clear it.
+
 ---
 
 ## 2. Console → Vercel
