@@ -59,6 +59,13 @@ export LLM_PROVIDER=anthropic
 export ANTHROPIC_API_KEY=sk-ant-...
 ```
 
+## Deploy
+
+API on Railway (Dockerfile + `railway.json` included), console on Vercel
+(`apps/web`). Full step-by-step: **[docs/DEPLOY.md](docs/DEPLOY.md)**.
+A platform 404 at the Vercel `/` means the project's **Root Directory** isn't set
+to `apps/web`.
+
 ## Layout
 
 See the build prompt; the repo follows §8 of it. Highlights:

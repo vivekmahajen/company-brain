@@ -38,23 +38,28 @@ class Embedding(TypeDecorator):
     impl = String
 
     def load_dialect_impl(self, dialect):
-        if dialect.name == "postgresql":
+        # Native pgvector only when explicitly enabled AND on Postgres; otherwise
+        # JSON text, so deploys work on any Postgres without the extension.
+        if dialect.name == "postgresql" and get_settings().use_pgvector:
             from pgvector.sqlalchemy import Vector  # imported lazily
 
             return dialect.type_descriptor(Vector(EMBED_DIM))
         return dialect.type_descriptor(String())
 
+    def _native(self, dialect) -> bool:
+        return dialect.name == "postgresql" and get_settings().use_pgvector
+
     def process_bind_param(self, value, dialect):
         if value is None:
             return None
-        if dialect.name == "postgresql":
+        if self._native(dialect):
             return list(value)
         return json.dumps(list(value))
 
     def process_result_value(self, value, dialect):
         if value is None:
             return None
-        if dialect.name == "postgresql":
+        if self._native(dialect) and not isinstance(value, str):
             return list(value)
         return json.loads(value)
 
@@ -72,8 +77,8 @@ def get_session() -> Iterator[Session]:
 
 
 def init_db() -> None:
-    """Create all tables. Enables the pgvector extension on Postgres."""
-    if not _is_sqlite:
+    """Create all tables. Enables the pgvector extension only when requested."""
+    if not _is_sqlite and get_settings().use_pgvector:
         from sqlalchemy import text
 
         with engine.begin() as conn:

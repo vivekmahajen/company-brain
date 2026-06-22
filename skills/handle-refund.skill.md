@@ -22,13 +22,13 @@ guardrails:
   - Never refund an order older than 90 days without manager approval.
   - Never exceed the original charge amount.
 provenance:
-  - ku: 1e9b005d  source: slack/#support 2026-03-08  span: "btw any refund inside the 30 day window we just auto-approve"
-  - ku: e0079e37  source: slack/#support 2026-03-11  span: "Going forward, refunds above $500 require manager sign-off."
-  - ku: e3d2c329  source: notion/Refund Policy 2026-01-15  span: "Never refund an order older than 90 days without manager app"
-  - ku: 0d11a3e3  source: notion/Refund Policy 2026-01-15  span: "Never exceed the original charge amount."
-  - ku: a50f0ab0  source: notion/Refund Policy 2026-01-15  span: "1. Look up the order by order_id."
-  - ku: 1dceabf1  source: notion/Refund Policy 2026-01-15  span: "2. Verify the purchase date and amount."
-  - ku: 70dce3b7  source: notion/Refund Policy 2026-01-15  span: "3. If eligible, issue the refund via Stripe and update the s"
+  - ku: a56c9797  source: slack/#support 2026-03-08  span: "btw any refund inside the 30 day window we just auto-approve"
+  - ku: 09ebc0f5  source: slack/#support 2026-03-11  span: "Going forward, refunds above $500 require manager sign-off."
+  - ku: 7579d36d  source: notion/Refund Policy 2026-01-15  span: "Never refund an order older than 90 days without manager app"
+  - ku: 74abcc50  source: notion/Refund Policy 2026-01-15  span: "Never exceed the original charge amount."
+  - ku: 920f51a0  source: notion/Refund Policy 2026-01-15  span: "1. Look up the order by order_id."
+  - ku: 8305e399  source: notion/Refund Policy 2026-01-15  span: "2. Verify the purchase date and amount."
+  - ku: ab4d13fb  source: notion/Refund Policy 2026-01-15  span: "3. If eligible, issue the refund via Stripe and update the s"
 ---
 
 ## When to use

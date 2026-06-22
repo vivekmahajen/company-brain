@@ -24,6 +24,16 @@ class Settings(BaseSettings):
     model_classify: str = Field(default="claude-haiku-4-5")
     model_compile: str = Field(default="claude-opus-4-8")
 
+    # --- Deploy -----------------------------------------------------------
+    # Use native pgvector columns + index (requires the pgvector extension,
+    # e.g. Railway's pgvector Postgres template). When false (default), vectors
+    # are stored as JSON text and similarity is computed in Python — identical
+    # Phase-1 results on ANY Postgres, so deploys never hard-fail on a missing
+    # extension. Flip to true once pgvector is available.
+    use_pgvector: bool = Field(default=False)
+    # Seed the refund demo (run the full pipeline) on startup if the DB is empty.
+    seed_on_startup: bool = Field(default=False)
+
     # --- Tenancy ----------------------------------------------------------
     default_org_id: str = Field(default="00000000-0000-0000-0000-000000000001")
 
