@@ -50,10 +50,37 @@ const STEP_DEFS: Omit<Step, "status" | "detail">[] = [
   },
 ];
 
+const AUDIENCES: Record<string, { label: string; intro: string; highlight: string[] }> = {
+  security: {
+    label: "Security buyer",
+    intro:
+      "Every agent action is permission-checked, gated, and audited at a single server-side choke point. An agent can't see — let alone execute — a skill outside its role, and high-value side effects are held for human approval. Both properties are measured deterministically at 100% (GAR + PER). Watch steps 5–7.",
+    highlight: ["exec_gate", "approve", "perms"],
+  },
+  ops: {
+    label: "Ops buyer",
+    intro:
+      "Your refund, incident, and pricing know-how — scattered across Slack, GitHub, email, call transcripts, and your database — becomes skills an agent executes correctly and safely, with a human in the loop on the risky calls. Watch steps 1–6.",
+    highlight: ["build", "route", "exec_small", "exec_gate", "approve"],
+  },
+  engineering: {
+    label: "Engineering",
+    intro:
+      "Fragmented sources → typed knowledge units with provenance → a deduplicated graph → compiled SKILL.md with tool bindings → served over MCP through one GovernedExecutor. Permissions propagate through derived knowledge; deterministic eval gates (GAR / PER / SEC) keep it honest. Watch all steps.",
+    highlight: STEP_DEFS.map((s) => s.key),
+  },
+};
+
 export default function DemoPage() {
   const [steps, setSteps] = useState<Step[]>(STEP_DEFS.map((s) => ({ ...s, status: "idle" })));
   const [running, setRunning] = useState(false);
   const [done, setDone] = useState(false);
+  const [audience, setAudience] = useState<keyof typeof AUDIENCES>("security");
+
+  function reset() {
+    setSteps(STEP_DEFS.map((s) => ({ ...s, status: "idle" })));
+    setDone(false);
+  }
 
   function update(key: string, status: Status, detail?: string) {
     setSteps((prev) => prev.map((s) => (s.key === key ? { ...s, status, detail } : s)));
@@ -141,25 +168,58 @@ export default function DemoPage() {
         </p>
       </div>
 
-      <button
-        onClick={run}
-        disabled={running}
-        className="rounded-lg bg-emerald-600 px-6 py-3 text-base font-semibold hover:bg-emerald-500 disabled:opacity-50"
-      >
-        {running ? "Running…" : done ? "Run the demo again" : "▶ Run the demo"}
-      </button>
+      {/* Audience selector — tailors the framing + highlights the key steps. */}
+      <div className="flex flex-wrap gap-2">
+        {(Object.keys(AUDIENCES) as (keyof typeof AUDIENCES)[]).map((k) => (
+          <button
+            key={k}
+            onClick={() => setAudience(k)}
+            className={`rounded-full px-3 py-1 text-sm ${
+              audience === k ? "bg-blue-600 text-white" : "bg-neutral-800 text-neutral-300 hover:bg-neutral-700"
+            }`}
+          >
+            {AUDIENCES[k].label}
+          </button>
+        ))}
+      </div>
+      <div className="rounded-lg border border-blue-900/50 bg-blue-900/10 p-3 text-sm text-neutral-200">
+        {AUDIENCES[audience].intro}
+      </div>
+
+      <div className="flex items-center gap-3">
+        <button
+          onClick={run}
+          disabled={running}
+          className="rounded-lg bg-emerald-600 px-6 py-3 text-base font-semibold hover:bg-emerald-500 disabled:opacity-50"
+        >
+          {running ? "Running…" : done ? "Run the demo again" : "▶ Run the demo"}
+        </button>
+        <button
+          onClick={reset}
+          disabled={running}
+          className="rounded-lg border border-neutral-700 px-4 py-3 text-sm text-neutral-300 hover:bg-neutral-800 disabled:opacity-50"
+        >
+          Reset
+        </button>
+      </div>
 
       <div className="space-y-3">
-        {steps.map((s) => (
+        {steps.map((s) => {
+          const keyForAudience = AUDIENCES[audience].highlight.includes(s.key);
+          return (
           <div
             key={s.key}
             className={`rounded-lg border p-4 ${
+              keyForAudience && audience !== "engineering" ? "ring-1 ring-blue-500/40 " : ""
+            }${
               s.status === "done"
                 ? "border-emerald-800 bg-emerald-900/10"
                 : s.status === "running"
                 ? "border-blue-700 bg-blue-900/10"
                 : s.status === "fail"
                 ? "border-red-800 bg-red-900/10"
+                : keyForAudience && audience !== "engineering"
+                ? "border-blue-900/60"
                 : "border-neutral-800"
             }`}
           >
@@ -176,7 +236,8 @@ export default function DemoPage() {
               </pre>
             )}
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {done && (
