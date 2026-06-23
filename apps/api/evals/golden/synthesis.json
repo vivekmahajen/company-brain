@@ -1,0 +1,37 @@
+{
+  "_meta": {"stage": "synthesis", "feeds": "E2", "note": "Deterministic checks on dedup / supersession / conflict over the real synthesizer."},
+  "cases": [
+    {"id": "syn_refund_threshold_supersession", "tier": "standard", "split": "test", "topic": "refund",
+     "inputs": [
+       {"type": "policy_rule", "statement": "refunds above $300 require manager sign-off",
+        "payload": {"action": "manager_approval", "amount_threshold": 300, "amount_gt": 300}, "occurred_at": "2025-08-01", "confidence": 0.9},
+       {"type": "policy_rule", "statement": "refunds above $500 require manager sign-off",
+        "payload": {"action": "manager_approval", "amount_threshold": 500, "amount_gt": 500}, "occurred_at": "2026-03-11", "confidence": 0.9}
+     ],
+     "expected": {"canonical_action": "manager_approval", "canonical_amount_threshold": 500, "superseded_retired": true, "supersession_auditable": true}},
+    {"id": "syn_duplicate_collapse", "tier": "standard", "split": "test", "topic": "refund",
+     "inputs": [
+       {"type": "policy_rule", "statement": "refunds within 30 days are automatically approved",
+        "payload": {"action": "auto_approve", "days_window": 30}, "occurred_at": "2026-01-15", "confidence": 0.9},
+       {"type": "policy_rule", "statement": "any refund inside the 30 day window we just auto-approve",
+        "payload": {"action": "auto_approve", "days_window": 30}, "occurred_at": "2026-03-08", "confidence": 0.9}
+     ],
+     "expected": {"canonical_action": "auto_approve", "active_count_for_action": 1, "merged_provenance_min": 2}},
+    {"id": "syn_pricing_supersession", "tier": "standard", "split": "test", "topic": "pricing",
+     "inputs": [
+       {"type": "policy_rule", "statement": "discounts above 10% require manager sign-off",
+        "payload": {"action": "manager_approval", "percent_threshold": 10}, "occurred_at": "2025-09-01", "confidence": 0.9},
+       {"type": "policy_rule", "statement": "discounts above 20% require manager sign-off",
+        "payload": {"action": "manager_approval", "percent_threshold": 20}, "occurred_at": "2026-02-01", "confidence": 0.9}
+     ],
+     "expected": {"canonical_action": "manager_approval", "canonical_percent_threshold": 20, "superseded_retired": true, "supersession_auditable": true}},
+    {"id": "syn_no_false_merge", "tier": "hard", "split": "dev", "topic": "refund",
+     "inputs": [
+       {"type": "policy_rule", "statement": "refunds within 30 days are automatically approved",
+        "payload": {"action": "auto_approve", "days_window": 30}, "occurred_at": "2026-01-15", "confidence": 0.9},
+       {"type": "policy_rule", "statement": "refunds above $500 require manager sign-off",
+        "payload": {"action": "manager_approval", "amount_threshold": 500}, "occurred_at": "2026-01-15", "confidence": 0.9}
+     ],
+     "expected": {"distinct_active_actions": ["auto_approve", "manager_approval"], "no_collapse": true}}
+  ]
+}

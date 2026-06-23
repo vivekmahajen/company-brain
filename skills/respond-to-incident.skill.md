@@ -24,10 +24,10 @@ tools:
 guardrails:
   - Never resolve a Sev1 incident without a written post-mortem.
 provenance:
-  - ku: 4c55865e  source: notion/Incident Response Runbook 2026-02-10  span: "Never resolve a Sev1 incident without a written post-mortem."
-  - ku: a1ed1cbe  source: notion/Incident Response Runbook 2026-02-10  span: "1. Classify the severity of the incident."
-  - ku: 97146cf3  source: notion/Incident Response Runbook 2026-02-10  span: "2. Page the on-call engineer for the affected service."
-  - ku: e42b9e7d  source: notion/Incident Response Runbook 2026-02-10  span: "3. Open an incident channel and post a status update."
+  - ku: 51a906ca  source: notion/Incident Response Runbook 2026-02-10  span: "Never resolve a Sev1 incident without a written post-mortem."
+  - ku: b530571a  source: notion/Incident Response Runbook 2026-02-10  span: "1. Classify the severity of the incident."
+  - ku: f1b05eaf  source: notion/Incident Response Runbook 2026-02-10  span: "2. Page the on-call engineer for the affected service."
+  - ku: a0a0fd85  source: notion/Incident Response Runbook 2026-02-10  span: "3. Open an incident channel and post a status update."
 ---
 
 ## When to use

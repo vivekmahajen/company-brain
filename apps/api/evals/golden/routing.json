@@ -1,0 +1,25 @@
+{
+  "_meta": {"stage": "routing", "feeds": "E4"},
+  "cases": [
+    {"id": "rt_angry", "task": "a customer is angry and wants their money back", "expected": "handle-refund", "tier": "standard", "split": "test"},
+    {"id": "rt_explicit", "task": "issue a refund for order 1234", "expected": "handle-refund", "tier": "easy", "split": "test"},
+    {"id": "rt_paraphrase", "task": "buyer is demanding a chargeback reversal", "expected": "handle-refund", "tier": "hard", "split": "test"},
+    {"id": "rt_reimburse", "task": "please reimburse this customer for their order", "expected": "handle-refund", "tier": "standard", "split": "test"},
+    {"id": "rt_money_back", "task": "they want their money back on order 55", "expected": "handle-refund", "tier": "easy", "split": "test"},
+    {"id": "rt_return_payment", "task": "return the payment to the customer", "expected": "handle-refund", "tier": "hard", "split": "dev"},
+    {"id": "rt_discount", "task": "the customer is asking for a 30% discount", "expected": "handle-pricing-exception", "tier": "standard", "split": "test"},
+    {"id": "rt_price_lower", "task": "can we give this account a lower price", "expected": "handle-pricing-exception", "tier": "hard", "split": "test"},
+    {"id": "rt_deal_desk", "task": "deal desk pricing exception request", "expected": "handle-pricing-exception", "tier": "easy", "split": "test"},
+    {"id": "rt_special_pricing", "task": "customer wants special pricing on renewal", "expected": "handle-pricing-exception", "tier": "standard", "split": "dev"},
+    {"id": "rt_incident", "task": "production is down, looks like a sev1 outage", "expected": "respond-to-incident", "tier": "standard", "split": "test"},
+    {"id": "rt_page_oncall", "task": "page the on-call engineer, the API is failing", "expected": "respond-to-incident", "tier": "easy", "split": "test"},
+    {"id": "rt_outage", "task": "we have a major service outage right now", "expected": "respond-to-incident", "tier": "standard", "split": "test"},
+    {"id": "rt_postmortem", "task": "the checkout service keeps erroring for everyone", "expected": "respond-to-incident", "tier": "hard", "split": "dev"},
+    {"id": "rt_oos_parental", "task": "what's our parental leave policy", "expected": "NONE", "tier": "standard", "split": "test"},
+    {"id": "rt_oos_shipping", "task": "customer wants to change their shipping address", "expected": "NONE", "tier": "hard", "split": "test"},
+    {"id": "rt_oos_password", "task": "how do I reset my password", "expected": "NONE", "tier": "easy", "split": "test"},
+    {"id": "rt_oos_hiring", "task": "what is the interview process for engineers", "expected": "NONE", "tier": "standard", "split": "test"},
+    {"id": "rt_oos_expense", "task": "how do I submit an expense report", "expected": "NONE", "tier": "hard", "split": "dev"},
+    {"id": "rt_oos_weather", "task": "what is the weather today", "expected": "NONE", "tier": "easy", "split": "test"}
+  ]
+}

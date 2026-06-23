@@ -46,6 +46,11 @@ export const api = {
   approvals: () => req("/approvals"),
   decideApproval: (id: string, decision: "approve" | "reject") =>
     req(`/approvals/${id}/decide`, { method: "POST", body: JSON.stringify({ decision }) }),
+
+  // Evals (CBE scorecard)
+  evalsLatest: () => req("/evals/latest"),
+  evalsRuns: () => req("/evals/runs"),
+  evalsFailures: (runId: string) => req(`/evals/runs/${runId}/failures`),
 };
 
 export type Route = { slug: string; title: string; score: number; confidence: number; reason: string };

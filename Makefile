@@ -7,9 +7,17 @@ install:
 demo:
 	python -m apps.api.demo
 
-# Eval harness: extraction precision/recall, routing accuracy, governance, determinism.
+# Unit/eval test suite (pytest).
 test:
 	python -m pytest
+
+# CBE Scorecard: GAR/SEC + supporting metrics → evals_out/cbe_scorecard.{json,md,html}
+eval:
+	python -m apps.api.evals.run --n 5
+
+# CI gate: hard-fail on GAR<100% / determinism<1.0 / regressions.
+eval-ci:
+	python -m apps.api.evals.run --ci --n 1 --no-persist
 
 # REST API (console backend + non-MCP agents).
 api:

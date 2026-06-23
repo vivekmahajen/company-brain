@@ -97,6 +97,26 @@ Three ways to extend the Brain, all live (no redeploy needed for the first two):
   knowledge via fixtures or the Add-knowledge box. Refund, **pricing
   exceptions**, and **incident response** ship built-in.
 
+## Measured accuracy — the CBE Scorecard
+
+The brain's quality is a published number, not a claim. `make eval` runs the
+**Company Brain Eval (CBE)** against versioned golden datasets and emits a
+scorecard. Two headline metrics nobody in the memory category reports:
+
+- **GAR — Guardrail Adherence Rate** (deterministic, no LLM judge, target 100%)
+- **SEC — Skill-Execution Correctness**
+
+Both drive the *real* `GovernedExecutor`, so a green CBE is a property of the
+shipped system. CI hard-fails on `GAR < 100%` or `determinism < 1.0`, and the
+harness's own sensitivity is tested (inject a guardrail leak → CBE turns red).
+Full methodology + current numbers: **[BENCHMARK.md](BENCHMARK.md)**. The console
+**Evals** page shows the latest scorecard + trend.
+
+```bash
+make eval        # scorecard -> evals_out/cbe_scorecard.{json,md,html}
+make eval-ci     # CI gate (nonzero exit on any failing threshold)
+```
+
 ## Deploy
 
 API on Railway (Dockerfile + `railway.json` included), console on Vercel

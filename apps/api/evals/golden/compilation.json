@@ -1,0 +1,34 @@
+{
+  "_meta": {"stage": "compilation", "feeds": "E3", "note": "Compile from the seeded brain and assert required rules/bindings/guardrails are present (structural, not exact text)."},
+  "cases": [
+    {"id": "comp_handle_refund", "tier": "standard", "split": "test", "topic": "refund", "slug": "handle-refund",
+     "expected_skill": {
+       "must_contain_body": ["500", "30 days", "90 days"],
+       "must_contain_bindings": [
+         {"name": "stripe_refund", "side_effecting": true, "approval_when_contains": "amount > 500"},
+         {"name": "update_support_ticket", "side_effecting": true}
+       ],
+       "must_contain_guardrails": ["90 days", "exceed"],
+       "min_provenance": 2,
+       "determinism": true
+     }},
+    {"id": "comp_handle_pricing", "tier": "standard", "split": "test", "topic": "pricing", "slug": "handle-pricing-exception",
+     "expected_skill": {
+       "must_contain_body": ["discount"],
+       "must_contain_bindings": [
+         {"name": "apply_discount", "side_effecting": true, "approval_when_contains": "discount_percent > 20"}
+       ],
+       "must_contain_guardrails": ["40%"],
+       "min_provenance": 1,
+       "determinism": true
+     }},
+    {"id": "comp_respond_incident", "tier": "standard", "split": "dev", "topic": "incident", "slug": "respond-to-incident",
+     "expected_skill": {
+       "must_contain_body": ["procedure"],
+       "must_contain_bindings": [{"name": "page_oncall", "side_effecting": true}],
+       "must_contain_guardrails": ["post-mortem"],
+       "min_provenance": 1,
+       "determinism": true
+     }}
+  ]
+}

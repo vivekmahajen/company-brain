@@ -1,0 +1,53 @@
+{
+  "_meta": {"stage": "extraction", "feeds": "E1", "match": "a unit matches if an extracted KU of the same type contains all `terms` (case-insensitive)"},
+  "cases": [
+    {"id": "ext_refund_policy", "tier": "standard", "split": "test", "kind": "notion_page",
+     "content": "Refund Policy\nRefunds within 30 days of purchase are automatically approved.\nRefund requests above $500 require manager sign-off.\nNever refund an order older than 90 days without manager approval.\nNever exceed the original charge amount.\n1. Look up the order by order_id.",
+     "expected_units": [
+       {"type": "policy_rule", "terms": ["30 day", "auto"], "must_have_span": "30 days"},
+       {"type": "policy_rule", "terms": ["$500", "manager"], "must_have_span": "$500"},
+       {"type": "policy_rule", "terms": ["never", "90 days"]},
+       {"type": "policy_rule", "terms": ["never exceed", "original"]},
+       {"type": "procedure_step", "terms": ["look up the order"]}
+     ], "expected_absent": false},
+    {"id": "ext_refund_slack_decision", "tier": "standard", "split": "test", "kind": "slack_message",
+     "content": "Going forward, refunds above $500 require manager sign-off. We made an exception today after manager approval.",
+     "expected_units": [
+       {"type": "policy_rule", "terms": ["$500", "manager"], "must_have_span": "$500"}
+     ], "expected_absent": false},
+    {"id": "ext_pricing_policy", "tier": "standard", "split": "test", "kind": "notion_page",
+     "content": "Pricing Exception Policy\nDiscounts up to 15% are automatically approved.\nDiscounts above 20% require manager sign-off.\nNever offer a discount above 40% without VP approval.",
+     "expected_units": [
+       {"type": "policy_rule", "terms": ["15%", "auto"]},
+       {"type": "policy_rule", "terms": ["20%", "manager"]},
+       {"type": "policy_rule", "terms": ["never", "40%"]}
+     ], "expected_absent": false},
+    {"id": "ext_incident_runbook", "tier": "standard", "split": "test", "kind": "notion_page",
+     "content": "Incident Response Runbook\nNever resolve a Sev1 incident without a written post-mortem.\n1. Classify the severity of the incident.\n2. Page the on-call engineer.",
+     "expected_units": [
+       {"type": "policy_rule", "terms": ["never", "post-mortem"]},
+       {"type": "procedure_step", "terms": ["classify the severity"]},
+       {"type": "procedure_step", "terms": ["page the on-call"]}
+     ], "expected_absent": false},
+    {"id": "ext_noise_coffee", "tier": "standard", "split": "test", "kind": "slack_message",
+     "content": "lol the coffee machine is broken again, who do I ping",
+     "expected_units": [], "expected_absent": true,
+     "expected_absent_reason": "operational chatter, not company knowledge"},
+    {"id": "ext_noise_lunch", "tier": "easy", "split": "test", "kind": "slack_message",
+     "content": "anyone want to grab lunch at 12",
+     "expected_units": [], "expected_absent": true,
+     "expected_absent_reason": "social chatter"},
+    {"id": "ext_noise_greeting", "tier": "easy", "split": "dev", "kind": "slack_message",
+     "content": "good morning team hope everyone had a great weekend",
+     "expected_units": [], "expected_absent": true, "expected_absent_reason": "greeting"},
+    {"id": "ext_refund_window_only", "tier": "easy", "split": "dev", "kind": "notion_page",
+     "content": "Refunds within 30 days of purchase are automatically approved.",
+     "expected_units": [{"type": "policy_rule", "terms": ["30 day", "auto"]}], "expected_absent": false},
+    {"id": "ext_guardrail_only", "tier": "easy", "split": "dev", "kind": "notion_page",
+     "content": "Never exceed the original charge amount on any refund.",
+     "expected_units": [{"type": "policy_rule", "terms": ["never exceed", "original"]}], "expected_absent": false},
+    {"id": "ext_pricing_dev", "tier": "standard", "split": "dev", "kind": "notion_page",
+     "content": "Discounts above 20% require manager sign-off for any pricing exception.",
+     "expected_units": [{"type": "policy_rule", "terms": ["20%", "manager"]}], "expected_absent": false}
+  ]
+}

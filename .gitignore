@@ -11,6 +11,9 @@ venv/
 *.db
 *.sqlite3
 
+# Generated eval scorecards
+evals_out/
+
 # Env / secrets
 .env
 .env.*

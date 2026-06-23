@@ -216,6 +216,45 @@ def knowledge_add(body: AddKnowledgeBody, db: Session = Depends(get_session)):
     return add_text_knowledge(db, _org(), text=body.text, source_name=body.source_name)
 
 
+# --- evals (CBE scorecard) ------------------------------------------------
+@router.get("/evals/latest")
+def evals_latest(db: Session = Depends(get_session)):
+    from apps.api.models.serving import EvalRun
+
+    run = db.scalars(select(EvalRun).order_by(EvalRun.started_at.desc())).first()
+    return run.scorecard_jsonb if run else {"error": "no eval runs yet — run `make eval`"}
+
+
+@router.get("/evals/runs")
+def evals_runs(db: Session = Depends(get_session)):
+    from apps.api.models.serving import EvalRun
+
+    rows = db.scalars(select(EvalRun).order_by(EvalRun.started_at.desc())).all()[:50]
+    return [
+        {
+            "id": r.id,
+            "commit_sha": r.commit_sha,
+            "finished_at": r.finished_at.isoformat() if r.finished_at else None,
+            "GAR": (r.scorecard_jsonb or {}).get("headline", {}).get("GAR"),
+            "SEC": (r.scorecard_jsonb or {}).get("headline", {}).get("SEC"),
+        }
+        for r in rows
+    ]
+
+
+@router.get("/evals/runs/{run_id}/failures")
+def evals_failures(run_id: str, db: Session = Depends(get_session)):
+    from apps.api.models.serving import EvalResult
+
+    rows = db.scalars(
+        select(EvalResult).where(EvalResult.eval_run_id == run_id, EvalResult.passed.is_(False))
+    ).all()
+    return [
+        {"stage": r.eval_stage, "case_id": r.case_id, "tier": r.tier, "error": r.error, "detail": r.metric_jsonb}
+        for r in rows
+    ]
+
+
 # --- governance / monitoring ----------------------------------------------
 @router.get("/staleness")
 def staleness(db: Session = Depends(get_session)):

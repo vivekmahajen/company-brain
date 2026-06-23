@@ -6,7 +6,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import JSON, DateTime, Float, Integer, String, Text, UniqueConstraint
+from sqlalchemy import JSON, Boolean, DateTime, Float, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from apps.api.models.db import Base
@@ -60,6 +60,37 @@ class ApprovalRequest(Base):
     result_jsonb: Mapped[dict] = mapped_column(JSON, default=dict)
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
+class EvalRun(Base):
+    """One CBE scorecard run (attribution + headline metrics) — §10."""
+
+    __tablename__ = "eval_run"
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(String, index=True, nullable=False)
+    commit_sha: Mapped[str] = mapped_column(String, default="")
+    dataset_version: Mapped[str] = mapped_column(String, default="")
+    model_id: Mapped[str] = mapped_column(String, default="")
+    model_snapshot: Mapped[str] = mapped_column(String, default="")
+    split: Mapped[str] = mapped_column(String, default="test")
+    n_runs: Mapped[int] = mapped_column(Integer, default=1)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    scorecard_jsonb: Mapped[dict] = mapped_column(JSON, default=dict)
+
+
+class EvalResult(Base):
+    __tablename__ = "eval_result"
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=_uuid)
+    eval_run_id: Mapped[str] = mapped_column(String, index=True, nullable=False)
+    eval_stage: Mapped[str] = mapped_column(String, nullable=False)
+    case_id: Mapped[str] = mapped_column(String, nullable=False)
+    tier: Mapped[str] = mapped_column(String, default="")
+    split: Mapped[str] = mapped_column(String, default="")
+    passed: Mapped[bool] = mapped_column(Boolean, default=False)
+    metric_jsonb: Mapped[dict] = mapped_column(JSON, default=dict)
+    judge_used: Mapped[bool] = mapped_column(Boolean, default=False)
+    error: Mapped[str | None] = mapped_column(Text)
 
 
 class Order(Base):

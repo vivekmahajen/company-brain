@@ -24,6 +24,11 @@ jobs:
       - name: MCP smoke test (sandbox)
         run: python scripts/mcp_smoke.py
 
+      # CBE Scorecard gate: GAR must be 100% (deterministic), determinism 1.0,
+      # no metric below threshold. Fails the build (and prints the scorecard).
+      - name: CBE eval gate
+        run: python -m apps.api.evals.run --ci --n 1 --no-persist
+
       # Hard rule (M5): a compile that leaves a skill unroutable fails CI.
       - name: Resolver lint — no dark capabilities
         run: |

@@ -77,8 +77,8 @@ def seed_principals(db: Session, org_id: str | None = None) -> None:
     for spec in SEED_PRINCIPALS:
         # Tokens are globally unique → one credential maps to exactly one
         # principal/org. The default org keeps the clean demo tokens; other orgs
-        # get a prefixed token so multi-tenant test data never collides.
-        token = spec["token"] if org_id == settings.default_org_id else f"{org_id[:8]}-{spec['token']}"
+        # get an org-prefixed token so multi-tenant data never collides.
+        token = spec["token"] if org_id == settings.default_org_id else f"{org_id}:{spec['token']}"
         th = hash_token(token)
         if db.scalar(select(Principal).where(Principal.token_hash == th)):
             continue
