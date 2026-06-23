@@ -15,15 +15,13 @@ test:
 eval:
 	python -m apps.api.evals.run --n 5
 
-# CI gate: hard-fail on GAR<100% / determinism<1.0 / regressions.
+# CI gate: hard-fail on GAR<100% / PER<100% / determinism<1.0 / regressions.
 eval-ci:
 	python -m apps.api.evals.run --ci --n 1 --no-persist
 
-# Run against the real Anthropic model for genuine CIs + model-measured judge κ.
-# Requires ANTHROPIC_API_KEY in the environment. Start with N=1 to sanity-check
-# cost, then the default 5-run for a publishable number.
-eval-live:
-	LLM_PROVIDER=anthropic python -m apps.api.evals.run --n 5
+# Refit the resolver confidence calibrator on the held-out calib split.
+calibrate:
+	python -m apps.api.resolver.calibration
 
 # REST API (console backend + non-MCP agents).
 api:

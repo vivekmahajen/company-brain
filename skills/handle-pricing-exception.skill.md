@@ -23,17 +23,17 @@ guardrails:
   - Never promise custom pricing on a call without deal desk confirmation.
   - Never approve a discount above 50% without CFO sign-off.
 provenance:
-  - ku: 8494e900  source: notion/Pricing Exception Policy 2026-02-01  span: "Discounts up to 15% are automatically approved."
-  - ku: 699021ee  source: notion/Pricing Exception Policy 2026-02-01  span: "Discounts above 20% require manager sign-off."
-  - ku: afedc47e  source: notion/Pricing Exception Policy 2026-02-01  span: "Never offer a discount above 40% without VP approval."
-  - ku: 73a888c7  source: notion/Pricing Exception Policy 2026-02-01  span: "1. Look up the account by account_id."
-  - ku: a61c58c1  source: notion/Pricing Exception Policy 2026-02-01  span: "2. Verify the requested discount_percent."
-  - ku: 67566772  source: notion/Pricing Exception Policy 2026-02-01  span: "3. If eligible, apply the discount and update the CRM."
-  - ku: 2069a8a8  source: transcript/BigCo pricing discussion 2026-02-09  span: "Never promise custom pricing on a call without deal desk con"
-  - ku: ae34acfe  source: gmail/deal-desk@acme.com 2026-02-10  span: "Approved a 15% discount for BigCo."
-  - ku: f9819b2e  source: gmail/deal-desk@acme.com 2026-02-10  span: "Never approve a discount above 50% without CFO sign-off."
-  - ku: b5ff0162  source: postgres/pricing & orders DB 2026-01-01  span: "Pricing tier Enterprise is measured as $50 per seat per mont"
-  - ku: 82f02fe8  source: postgres/pricing & orders DB 2026-01-01  span: "Pricing tier Pro is measured as $25 per seat per month."
+  - ku: fd0fe297  source: notion/Pricing Exception Policy 2026-02-01  span: "Discounts up to 15% are automatically approved."
+  - ku: ace9344d  source: notion/Pricing Exception Policy 2026-02-01  span: "Discounts above 20% require manager sign-off."
+  - ku: f4f7a556  source: notion/Pricing Exception Policy 2026-02-01  span: "Never offer a discount above 40% without VP approval."
+  - ku: 9dacdc08  source: notion/Pricing Exception Policy 2026-02-01  span: "1. Look up the account by account_id."
+  - ku: 14495049  source: notion/Pricing Exception Policy 2026-02-01  span: "2. Verify the requested discount_percent."
+  - ku: 2f4b5cff  source: notion/Pricing Exception Policy 2026-02-01  span: "3. If eligible, apply the discount and update the CRM."
+  - ku: 8bf710f9  source: transcript/BigCo pricing discussion 2026-02-09  span: "Never promise custom pricing on a call without deal desk con"
+  - ku: b71b21a1  source: gmail/deal-desk@acme.com 2026-02-10  span: "Approved a 15% discount for BigCo."
+  - ku: e2a1ad40  source: gmail/deal-desk@acme.com 2026-02-10  span: "Never approve a discount above 50% without CFO sign-off."
+  - ku: 26a658c6  source: postgres/pricing & orders DB 2026-01-01  span: "Pricing tier Enterprise is measured as $50 per seat per mont"
+  - ku: eab66c61  source: postgres/pricing & orders DB 2026-01-01  span: "Pricing tier Pro is measured as $25 per seat per month."
 ---
 
 ## When to use

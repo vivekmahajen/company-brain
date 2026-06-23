@@ -23,14 +23,14 @@ guardrails:
   - Never exceed the original charge amount.
   - Never refund a digital goods order after the license key has been activated.
 provenance:
-  - ku: 6f9b0a90  source: slack/#support 2026-03-08  span: "btw any refund inside the 30 day window we just auto-approve"
-  - ku: 163ecd55  source: slack/#support 2026-03-11  span: "Going forward, refunds above $500 require manager sign-off."
-  - ku: 606bfeca  source: notion/Refund Policy 2026-01-15  span: "Never refund an order older than 90 days without manager app"
-  - ku: 474923fa  source: notion/Refund Policy 2026-01-15  span: "Never exceed the original charge amount."
-  - ku: 6e58fb67  source: notion/Refund Policy 2026-01-15  span: "1. Look up the order by order_id."
-  - ku: 42006593  source: notion/Refund Policy 2026-01-15  span: "2. Verify the purchase date and amount."
-  - ku: bb6b9c66  source: notion/Refund Policy 2026-01-15  span: "3. If eligible, issue the refund via Stripe and update the s"
-  - ku: 3dad06b1  source: zendesk/support tickets 2026-03-01  span: "Never refund a digital goods order after the license key has"
+  - ku: 5aa82dca  source: slack/#support 2026-03-08  span: "btw any refund inside the 30 day window we just auto-approve"
+  - ku: aad9d473  source: slack/#support 2026-03-11  span: "Going forward, refunds above $500 require manager sign-off."
+  - ku: 334a6fa1  source: notion/Refund Policy 2026-01-15  span: "Never refund an order older than 90 days without manager app"
+  - ku: 5c1cfb28  source: notion/Refund Policy 2026-01-15  span: "Never exceed the original charge amount."
+  - ku: 9070f5f5  source: notion/Refund Policy 2026-01-15  span: "1. Look up the order by order_id."
+  - ku: 602a6355  source: notion/Refund Policy 2026-01-15  span: "2. Verify the purchase date and amount."
+  - ku: 73496d32  source: notion/Refund Policy 2026-01-15  span: "3. If eligible, issue the refund via Stripe and update the s"
+  - ku: 1855eb30  source: zendesk/support tickets 2026-03-01  span: "Never refund a digital goods order after the license key has"
 ---
 
 ## When to use

@@ -52,12 +52,11 @@ python -m apps.api.demo        # (run from repo root) or: make demo
 pytest -q                      # or: make test
 ```
 
-To use real Anthropic:
-
-```bash
-export LLM_PROVIDER=anthropic
-export ANTHROPIC_API_KEY=sk-ant-...
-```
+The system runs **fixture-first**: the default `LLM_PROVIDER=fixture` is a
+deterministic, offline provider, so the whole loop, the demo, and the benchmark
+run with **no external model and no API key**. The LLM sits behind one interface
+(`apps/api/llm/base.py`) if you ever want to plug a model in, but it is not
+required to run anything here.
 
 ## Governed MCP serving layer (agents execute skills)
 
@@ -130,24 +129,29 @@ Three ways to extend the Brain, all live (no redeploy needed for the first two):
 
 ## Measured accuracy — the CBE Scorecard
 
-The brain's quality is a published number, not a claim. `make eval` runs the
-**Company Brain Eval (CBE)** against versioned golden datasets and emits a
-scorecard. Three headline metrics nobody in the memory category reports:
+The brain's quality is a published number, not a claim — and it's **deterministic
+by design** (runs offline on the fixture provider; no external model). `make eval`
+runs the **Company Brain Eval (CBE)** and emits a reproducible scorecard. Three
+headline metrics nobody in the memory category reports, each exact with a
+disclosed n:
 
-- **GAR — Guardrail Adherence Rate** (deterministic, no LLM judge, target 100%)
+- **GAR — Guardrail Adherence Rate** (deterministic, 100% · n=18)
 - **PER — Permission Enforcement Rate** (deterministic; zero-leak under
-  aggregation/provenance/revocation attacks, target 100%)
-- **SEC — Skill-Execution Correctness**
+  aggregation/provenance/revocation attacks, 100% · n=17)
+- **SEC — Skill-Execution Correctness** (100% · n=23)
 
-Both drive the *real* `GovernedExecutor`, so a green CBE is a property of the
-shipped system. CI hard-fails on `GAR < 100%` or `determinism < 1.0`, and the
-harness's own sensitivity is tested (inject a guardrail leak → CBE turns red).
-Full methodology + current numbers: **[BENCHMARK.md](BENCHMARK.md)**. The console
-**Evals** page shows the latest scorecard + trend.
+These drive the *real* `GovernedExecutor` / `VisibilityFilter`, so a green CBE is a
+property of the shipped system. The resolver's confidence is Platt-calibrated
+(**ECE 0.68 → 0.077**, fit on a held-out split). CI hard-fails on `GAR/PER < 100%`
+or `determinism < 1.0`, and the harness's own sensitivity is tested (inject a
+guardrail leak → CBE turns red). Extraction F1 and judge κ are **deliberately not
+published** — they'd require a model this config doesn't run; full rationale +
+numbers in **[BENCHMARK.md](BENCHMARK.md)**.
 
 ```bash
-make eval        # scorecard -> evals_out/cbe_scorecard.{json,md,html}
+make eval        # the published deterministic scorecard (offline, free)
 make eval-ci     # CI gate (nonzero exit on any failing threshold)
+make calibrate   # refit the resolver confidence calibrator
 ```
 
 ## Deploy
