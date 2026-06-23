@@ -89,10 +89,10 @@ def write(sc: dict, out_dir: str = REPORT_DIR) -> dict:
         "md": os.path.join(out_dir, "cbe_scorecard.md"),
         "html": os.path.join(out_dir, "cbe_scorecard.html"),
     }
-    with open(paths["json"], "w") as f:
+    with open(paths["json"], "w", encoding="utf-8") as f:
         json.dump(sc, f, indent=2)
-    with open(paths["md"], "w") as f:
+    with open(paths["md"], "w", encoding="utf-8") as f:
         f.write(to_markdown(sc))
-    with open(paths["html"], "w") as f:
+    with open(paths["html"], "w", encoding="utf-8") as f:
         f.write(to_html(sc))
     return paths

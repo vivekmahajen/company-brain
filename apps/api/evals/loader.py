@@ -18,7 +18,7 @@ DATASET_VERSION = "v0.1"
 
 @lru_cache(maxsize=None)
 def _load(stage: str) -> dict:
-    with open(os.path.join(GOLDEN_PATH, f"{stage}.json")) as f:
+    with open(os.path.join(GOLDEN_PATH, f"{stage}.json"), encoding="utf-8") as f:
         return json.load(f)
 
 

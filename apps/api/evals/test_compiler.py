@@ -8,7 +8,7 @@ from apps.api.services.execution import get_skill
 def test_skill_file_written(seeded):
     path = os.path.join(get_settings().skills_dir, "handle-refund.skill.md")
     assert os.path.exists(path)
-    body = open(path).read()
+    body = open(path, encoding="utf-8").read()
     assert "slug: handle-refund" in body
     assert "approval_required_when:" in body
 

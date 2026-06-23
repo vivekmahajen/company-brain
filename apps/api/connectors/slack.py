@@ -28,7 +28,7 @@ class SlackConnector(Connector):
         path = self.config.get("fixture_path") or os.path.join(
             get_settings().fixtures_dir, "slack", "support.json"
         )
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             return json.load(f)
 
     def discover(self) -> dict:

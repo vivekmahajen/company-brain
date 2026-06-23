@@ -268,6 +268,6 @@ def _write_skill_file(slug: str, body_md: str) -> str:
     settings = get_settings()
     os.makedirs(settings.skills_dir, exist_ok=True)
     path = os.path.join(settings.skills_dir, f"{slug}.skill.md")
-    with open(path, "w") as f:
+    with open(path, "w", encoding="utf-8") as f:
         f.write(body_md)
     return path

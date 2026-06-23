@@ -134,6 +134,6 @@ def write_resolver_md(db: Session, org_id: str) -> str:
     content = "\n".join(lines) + "\n"
     path = get_settings().resolver_path
     os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
-    with open(path, "w") as f:
+    with open(path, "w", encoding="utf-8") as f:
         f.write(content)
     return path
