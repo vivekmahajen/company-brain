@@ -102,6 +102,9 @@ _ADDED_COLUMNS = {
         "transport": "VARCHAR",
         "trace_id": "VARCHAR",
     },
+    "order_record": {
+        "provider_charge_id": "VARCHAR",
+    },
 }
 
 

@@ -17,6 +17,10 @@ class _GenericSandboxAction(Action):
         self.name = name
 
     def execute(self, args: dict, resolved_facts: dict, idempotency_key: str) -> dict:
+        if self.mode == "live":
+            raise RuntimeError(
+                f"no live adapter implemented for '{self.name}'; refusing to run a real side effect."
+            )
         ref = self.name + "_" + hashlib.sha256(idempotency_key.encode()).hexdigest()[:10]
         return {"provider": "sandbox", "action": self.name, "ref": ref, "args": args, "mode": "sandbox"}
 

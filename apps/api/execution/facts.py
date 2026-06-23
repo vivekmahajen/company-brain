@@ -40,6 +40,8 @@ def resolve_facts(db: Session, org_id: str, tool_name: str, args: dict) -> dict:
                 "requested_amount": args.get("amount"),
                 "order_age_days": order.age_days,
                 "order_status": order.status,
+                # required for a live provider refund; None in the demo dataset
+                "provider_charge_id": order.provider_charge_id,
             }
         )
         return facts

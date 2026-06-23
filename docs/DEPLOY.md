@@ -84,6 +84,34 @@ The console lives in `apps/web`.
 The API allows all origins by default (`apps/api/main.py`). To lock it to your
 Vercel domain, set `allow_origins` to `["https://<your-app>.vercel.app"]`.
 
+## Going live with real refunds (ACTIONS_MODE=live)
+
+**This moves real money.** Sandbox is the default and is safe; live is opt-in and
+fails closed. To enable real Stripe refunds:
+
+1. **Provider key** — set `STRIPE_API_KEY` (use a *restricted* key scoped to
+   refunds only) on the API service. Without it, every live refund refuses to run.
+2. **Order → charge mapping** — a real refund needs the Stripe `charge` /
+   `payment_intent` id, not just an order id. Populate
+   `order_record.provider_charge_id` (in production this comes from your orders
+   connector). If it's missing for an order, the live refund fails closed.
+3. **Flip the flag** — set `ACTIONS_MODE=live` on the API service.
+
+Safety properties that still hold in live mode:
+
+- The refund only runs **after** the approval gate clears (a `>$500` refund is
+  still held for a human approver).
+- The `idempotency_key` is passed to Stripe's native idempotency, so a retry
+  past our own check still cannot double-refund.
+- Any adapter/provider error is caught and returned as a typed `error` outcome,
+  logged in `execution_log` — it never crashes the server or silently succeeds.
+- Tools without a dedicated live adapter (apply_discount, page_oncall, …) refuse
+  to run in live mode rather than guessing.
+
+Recommended rollout: keep `ACTIONS_MODE=sandbox` until you've (a) confirmed the
+approval workflow in the console, (b) loaded real `provider_charge_id`s, and (c)
+set a refund-scoped restricted Stripe key. Then flip one service to `live`.
+
 ## 4. MCP (agents)
 
 The MCP server (`python -m apps.api.mcp.server`, stdio) is for agent clients and

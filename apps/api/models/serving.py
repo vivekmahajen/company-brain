@@ -73,3 +73,5 @@ class Order(Base):
     original_charge: Mapped[float] = mapped_column(Float, default=0.0)
     age_days: Mapped[int] = mapped_column(Integer, default=0)
     status: Mapped[str] = mapped_column(String, default="paid")
+    # Provider charge/payment_intent id required to issue a real (live) refund.
+    provider_charge_id: Mapped[str | None] = mapped_column(String)

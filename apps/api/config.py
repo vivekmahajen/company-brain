@@ -46,8 +46,10 @@ class Settings(BaseSettings):
     # Seed the refund demo (run the full pipeline) on startup if the DB is empty.
     seed_on_startup: bool = Field(default=False)
     # Action adapters: "sandbox" simulates side effects; "live" hits real
-    # providers (gated; never default).
+    # providers (gated; never default). Live requires the relevant provider key
+    # and fails closed without it.
     actions_mode: str = Field(default="sandbox")
+    stripe_api_key: str | None = Field(default=None)
     # Minutes a pending approval stays valid before expiring.
     approval_ttl_minutes: int = Field(default=1440)
 

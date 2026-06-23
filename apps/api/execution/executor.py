@@ -213,7 +213,18 @@ class GovernedExecutor:
             return _replay(approval_request.result_jsonb)
 
         action = get_action(tool_name)
-        result = action.execute(args, facts, key)
+        try:
+            result = action.execute(args, facts, key)
+        except Exception as e:  # noqa: BLE001 - adapter/provider failure must not crash the server
+            self._log(
+                org_id=principal.org_id, principal_id=principal.id, skill_id=skill.id,
+                idempotency_key=key, transport=transport, trace_id=trace_id,
+                input_jsonb={"tool": tool_name, "skill": skill.slug, **args},
+                output_jsonb={"error": str(e)}, outcome="error", gate_decision=gate_decision,
+                approval_request_id=approval_request.id if approval_request else None,
+            )
+            db.commit()
+            return _denied("error", f"action '{tool_name}' failed: {e}")
 
         log = self._log(
             org_id=principal.org_id, principal_id=principal.id, agent_id=principal.display_name,
