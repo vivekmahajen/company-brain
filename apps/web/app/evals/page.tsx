@@ -31,6 +31,8 @@ export default async function EvalsPage() {
 
   const a = sc.attribution;
   const m = sc.metrics;
+  const ns = sc.metric_n || {};
+  const cal = sc.calibration;
   const supporting: [string, string][] = [
     ["Routing top-1", "routing_top1"],
     ["Routing abstention", "routing_abstention"],
@@ -48,15 +50,42 @@ export default async function EvalsPage() {
       <div>
         <h1 className="text-2xl font-semibold">Company Brain Eval (CBE)</h1>
         <p className="mt-1 text-xs text-neutral-500">
+          <span className={`mr-2 rounded px-1.5 py-0.5 ${sc.mode?.startsWith("live") ? "bg-emerald-900/50 text-emerald-300" : "bg-neutral-800 text-neutral-300"}`}>
+            {sc.mode || "fixture"}
+          </span>
           commit {a.commit_sha} · dataset {a.dataset_version} · {a.model_id} ({a.model_snapshot}) · {a.n_runs} runs ·{" "}
           <b>{a.split}</b> split · seed {a.seed}
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <Tile label="Guardrail Adherence (GAR)" value={pct(m.GAR)} good={m.GAR?.mean >= 1} sub="deterministic · 100% required" />
-        <Tile label="Skill-Execution Correctness (SEC)" value={pct(m.SEC)} good={m.SEC?.mean >= 0.9} sub="≥90%" />
+      <div className="text-xs text-neutral-500">Deterministic governance — exact rates with n (model-independent):</div>
+      <div className="grid grid-cols-3 gap-4">
+        <Tile label="Guardrail Adherence (GAR)" value={pct(m.GAR)} good={m.GAR?.mean >= 1} sub={`deterministic · n=${ns.GAR ?? "?"} · 100% req`} />
+        <Tile label="Permission Enforcement (PER)" value={pct(m.PER)} good={m.PER?.mean >= 1} sub={`deterministic · n=${ns.PER ?? "?"} · 100% req`} />
+        <Tile label="Skill-Execution (SEC)" value={pct(m.SEC)} good={m.SEC?.mean >= 0.9} sub={`deterministic · n=${ns.SEC ?? "?"} · ≥90%`} />
       </div>
+
+      {cal && (
+        <section className="rounded-lg border border-neutral-800 p-4">
+          <h2 className="mb-1 text-lg font-medium">Calibration (resolver confidence)</h2>
+          <p className="text-sm text-neutral-300">
+            ECE <b>{cal.ece}</b> · 95% CI [{cal.ci95?.[0]}, {cal.ci95?.[1]}] · n={cal.n} committed · {cal.bins} bins
+          </p>
+          <div className="mt-2 space-y-1">
+            {(cal.reliability || []).map((b: any, i: number) => (
+              <div key={i} className="flex items-center gap-2 text-xs font-mono text-neutral-400">
+                <span className="w-16">{b.lo}-{b.hi}</span>
+                <span className="w-10">n={b.n}</span>
+                <span className="w-16">conf {b.avg_conf}</span>
+                <div className="h-3 flex-1 rounded bg-neutral-900">
+                  <div className="h-3 rounded bg-emerald-600" style={{ width: `${b.accuracy * 100}%` }} />
+                </div>
+                <span className="w-12 text-right">acc {b.accuracy}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section>
         <h2 className="mb-2 text-lg font-medium">Supporting</h2>

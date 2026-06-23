@@ -34,17 +34,20 @@ def _fmt(metric: dict | None) -> str:
 def to_markdown(sc: dict) -> str:
     a = sc["attribution"]
     m = sc["metrics"]
+    ns = sc.get("metric_n", {})
     L = []
     L.append(f"# {sc['name']} — v{sc['version']}\n")
-    L.append(f"> commit `{a['commit_sha']}` · dataset {a['dataset_version']} · "
+    L.append(f"> **{sc.get('mode','fixture')}** · commit `{a['commit_sha']}` · dataset {a['dataset_version']} · "
              f"{a['model_id']} ({a['model_snapshot']}) · {a['n_runs']} runs · **{a['split']}** split · seed {a['seed']}\n")
-    L.append("## Headline\n")
-    L.append("| Metric | Value | Gate |")
-    L.append("|---|---|---|")
+    L.append("## Headline — deterministic governance (exact, with n)\n")
+    L.append("| Metric | Value | n | Gate |")
+    L.append("|---|---|---|---|")
     gar = m.get("GAR", {})
-    L.append(f"| **Guardrail Adherence Rate (GAR)** | **{_fmt(gar)}** | {sc['gates'].get('GAR','')} |")
-    L.append(f"| **Permission Enforcement Rate (PER)** | **{_fmt(m.get('PER'))}** | {sc['gates'].get('PER','')} |")
-    L.append(f"| **Skill-Execution Correctness (SEC)** | **{_fmt(m.get('SEC'))}** | {sc['gates'].get('SEC','')} |")
+    L.append(f"| **Guardrail Adherence Rate (GAR)** | **{_fmt(gar)}** | {ns.get('GAR','?')} | {sc['gates'].get('GAR','')} |")
+    L.append(f"| **Permission Enforcement Rate (PER)** | **{_fmt(m.get('PER'))}** | {ns.get('PER','?')} | {sc['gates'].get('PER','')} |")
+    L.append(f"| **Skill-Execution Correctness (SEC)** | **{_fmt(m.get('SEC'))}** | {ns.get('SEC','?')} | {sc['gates'].get('SEC','')} |")
+    L.append("\n_These drive the real GovernedExecutor / VisibilityFilter with programmatic pass/fail — "
+             "they are exact rates, independent of the extraction model._")
     L.append("\n## Supporting\n")
     L.append("| Metric | Value |")
     L.append("|---|---|")
@@ -63,7 +66,20 @@ def to_markdown(sc: dict) -> str:
         else:
             L.append(f"| {label} | {_fmt(m[key])} |")
     j = sc["judge"]
-    L.append(f"| Judge agreement (κ vs human) | {j['kappa']}{' ⚠ low-trust' if j['low_trust'] else ''} |")
+    L.append(f"| Judge agreement (κ vs human, n={j.get('n','?')}) | {j['kappa']}{' ⚠ low-trust' if j['low_trust'] else ''} |")
+
+    cal = sc.get("calibration")
+    if cal:
+        L.append("\n## Calibration (resolver confidence)\n")
+        ci = cal.get("ci95", [0, 0])
+        L.append(f"ECE = **{cal.get('ece')}** · 95% CI [{ci[0]}, {ci[1]}] · n={cal.get('n')} committed · {cal.get('bins')} bins (bootstrap)\n")
+        L.append("Reliability diagram (confidence → empirical accuracy; ideal = equal):\n")
+        L.append("```")
+        L.append(f"{'bin':>10} {'n':>4} {'conf':>6} {'acc':>6}")
+        for b in cal.get("reliability", []):
+            bar = "█" * round(b["accuracy"] * 20)
+            L.append(f"{b['lo']:.1f}-{b['hi']:.1f} {b['n']:>4} {b['avg_conf']:>6.3f} {b['accuracy']:>6.3f}  {bar}")
+        L.append("```")
     if sc.get("extraction_by_kind"):
         L.append("\n## Extraction F1 by source kind\n")
         L.append("| Source kind | F1 | Noise rejection | Cases |")

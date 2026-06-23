@@ -56,7 +56,9 @@ SKILL_TEMPLATES: dict[str, dict] = {
             "process a chargeback reversal",
             "refund an order",
         ],
-        "keywords": ["refund", "money back", "chargeback", "reimburse", "return payment"],
+        "keywords": ["refund", "money back", "chargeback", "reimburse", "return payment",
+                     "reverse the charge", "reverse", "overcharged", "double charged",
+                     "wrong charge", "charged", "return", "cancelled order"],
     },
     "pricing": {
         "slug": "handle-pricing-exception",
@@ -104,7 +106,8 @@ SKILL_TEMPLATES: dict[str, dict] = {
             "grant a pricing exception",
             "special pricing request",
         ],
-        "keywords": ["discount", "pricing", "price exception", "deal desk", "markdown", "special pricing"],
+        "keywords": ["discount", "pricing", "price exception", "deal desk", "markdown", "special pricing",
+                     "lower price", "custom price", "price", "percent off", "% off", "exception"],
     },
     "incident": {
         "slug": "respond-to-incident",
@@ -157,6 +160,8 @@ SKILL_TEMPLATES: dict[str, dict] = {
             "service outage",
             "page the on-call engineer",
         ],
-        "keywords": ["incident", "outage", "down", "sev1", "pager", "on-call", "post-mortem"],
+        "keywords": ["incident", "outage", "down", "sev1", "pager", "on-call", "post-mortem",
+                     "degraded", "service is", "unreachable", "500s", "errors", "failing",
+                     "broken", "impacted", "latency", "outages"],
     },
 }

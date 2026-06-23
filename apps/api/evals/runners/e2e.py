@@ -27,7 +27,7 @@ def run(db: Session, split: str | None = "test", run_tag: str = "") -> list[dict
         if split and case["split"] != split:
             continue
         try:
-            slug, _ = _route(db, case["task"])
+            slug = _route(db, case["task"])[0]
             ok = slug == case["expected_slug"]
             detail = {"routed": slug}
             if case["expected_decision"] is not None and ok:

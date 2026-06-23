@@ -21,6 +21,12 @@ from apps.api.models.tables import ResolverEntry, Skill
 _SLUG_TO_TMPL = {t["slug"]: t for t in SKILL_TEMPLATES.values()}
 
 
+def _calibrate(score: float) -> float:
+    from apps.api.resolver import calibration
+
+    return calibration.apply(score)
+
+
 def _latest_skills(db: Session, org_id: str) -> list[Skill]:
     rows = db.scalars(select(Skill).where(Skill.org_id == org_id).order_by(Skill.version.desc())).all()
     seen, out = set(), []
@@ -102,8 +108,11 @@ def resolve(db: Session, org_id: str, task: str, top_k: int = 3) -> list[dict]:
                 "slug": e.slug,
                 "skill_id": e.skill_id,
                 "title": skill.title if skill else e.slug,
+                # ranking uses the RAW score (top-1 invariant, INT-8); confidence
+                # is the calibrated P(top-1 correct).
                 "score": round(score, 3),
-                "confidence": round(min(1.0, score), 3),
+                "raw_score": round(score, 3),
+                "confidence": round(_calibrate(score), 3),
                 "reason": "; ".join(reason_bits),
             }
         )

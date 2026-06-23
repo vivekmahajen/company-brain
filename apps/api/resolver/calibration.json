@@ -1,0 +1,8 @@
+{
+  "A": 9.426361,
+  "B": -0.416268,
+  "method": "platt",
+  "dataset_version": "v0.3",
+  "fit_split": "calib",
+  "n": 17
+}

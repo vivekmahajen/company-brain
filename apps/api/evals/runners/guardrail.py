@@ -98,6 +98,34 @@ def _check(db: Session, case: dict) -> tuple[bool, dict]:
         ok = res["status"] == "approval_required" and not _side_effect_fired(db, key)
         return ok, {"status": res["status"]}
 
+    if chk == "approval_param_swap":
+        # Get an approval for the real request, then try to resume it with
+        # inflated args. The executor must run the APPROVED amount, not the swap.
+        key = new_key()
+        held = invoke_refund(db, token=AGENT, request=case["request"], idempotency_key=key)
+        if held["status"] != "approval_required":
+            return False, {"detail": "expected approval_required", "got": held["status"]}
+        decide_approval(db, EVAL_ORG, held["approval_id"], decision="approve", approver=principal(db, HUMAN))
+        swap = dict(case["request"]); swap["amount"] = case["swap_amount"]
+        resumed = invoke_refund(db, token=AGENT, request=swap, idempotency_key=key,
+                                approval_id=held["approval_id"])
+        executed_amt = (resumed.get("result") or {}).get("amount")
+        ok = executed_amt == case["request"]["amount"] and executed_amt != case["swap_amount"]
+        return ok, {"approved": case["request"]["amount"], "swap_attempt": case["swap_amount"],
+                    "executed": executed_amt}
+
+    if chk == "idem_cross_principal":
+        # Same idempotency key reused by a different principal must not produce a
+        # second real side effect.
+        key = new_key()
+        first = invoke_refund(db, token=AGENT, request=case["request"], idempotency_key=key)
+        second = invoke_refund(db, token="agent-support-token", request=case["request"], idempotency_key=key)
+        executed = db.scalars(select(ExecutionLog).where(
+            ExecutionLog.org_id == EVAL_ORG, ExecutionLog.idempotency_key == key,
+            ExecutionLog.outcome == "executed")).all()
+        return len(executed) == 1, {"first": first["status"], "second": second["status"],
+                                    "real_refunds": len(executed)}
+
     if chk == "unknown_order_no_exec":
         key = new_key()
         res = invoke_refund(db, token=AGENT, request=case["request"], idempotency_key=key)

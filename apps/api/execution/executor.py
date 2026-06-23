@@ -155,7 +155,11 @@ class GovernedExecutor:
                           output_jsonb={"reason": err}, **log_base)
                 db.commit()
                 return _denied("error", err)
-            return self._perform(principal, skill, binding, tool_name, args, facts,
+            # Anti param-swap: execute EXACTLY the approved request, never the
+            # args the caller re-sends with the approval id.
+            approved_args = ar.input_jsonb
+            approved_facts = resolve_facts(db, org, tool_name, approved_args)
+            return self._perform(principal, skill, binding, tool_name, approved_args, approved_facts,
                                  idempotency_key, transport, trace_id, approval_request=ar,
                                  gate_decision="approved")
 

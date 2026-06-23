@@ -13,7 +13,7 @@ GOLDEN_DIR = os.path.dirname(os.path.abspath(__file__))
 GOLDEN_PATH = os.path.join(GOLDEN_DIR, "golden")
 
 # Bump when golden datasets change.
-DATASET_VERSION = "v0.2"
+DATASET_VERSION = "v0.3"
 
 
 @lru_cache(maxsize=None)

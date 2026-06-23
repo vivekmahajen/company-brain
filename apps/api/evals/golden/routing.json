@@ -1,25 +1,534 @@
 {
-  "_meta": {"stage": "routing", "feeds": "E4"},
-  "cases": [
-    {"id": "rt_angry", "task": "a customer is angry and wants their money back", "expected": "handle-refund", "tier": "standard", "split": "test"},
-    {"id": "rt_explicit", "task": "issue a refund for order 1234", "expected": "handle-refund", "tier": "easy", "split": "test"},
-    {"id": "rt_paraphrase", "task": "buyer is demanding a chargeback reversal", "expected": "handle-refund", "tier": "hard", "split": "test"},
-    {"id": "rt_reimburse", "task": "please reimburse this customer for their order", "expected": "handle-refund", "tier": "standard", "split": "test"},
-    {"id": "rt_money_back", "task": "they want their money back on order 55", "expected": "handle-refund", "tier": "easy", "split": "test"},
-    {"id": "rt_return_payment", "task": "return the payment to the customer", "expected": "handle-refund", "tier": "hard", "split": "dev"},
-    {"id": "rt_discount", "task": "the customer is asking for a 30% discount", "expected": "handle-pricing-exception", "tier": "standard", "split": "test"},
-    {"id": "rt_price_lower", "task": "can we give this account a lower price", "expected": "handle-pricing-exception", "tier": "hard", "split": "test"},
-    {"id": "rt_deal_desk", "task": "deal desk pricing exception request", "expected": "handle-pricing-exception", "tier": "easy", "split": "test"},
-    {"id": "rt_special_pricing", "task": "customer wants special pricing on renewal", "expected": "handle-pricing-exception", "tier": "standard", "split": "dev"},
-    {"id": "rt_incident", "task": "production is down, looks like a sev1 outage", "expected": "respond-to-incident", "tier": "standard", "split": "test"},
-    {"id": "rt_page_oncall", "task": "page the on-call engineer, the API is failing", "expected": "respond-to-incident", "tier": "easy", "split": "test"},
-    {"id": "rt_outage", "task": "we have a major service outage right now", "expected": "respond-to-incident", "tier": "standard", "split": "test"},
-    {"id": "rt_postmortem", "task": "the checkout service keeps erroring for everyone", "expected": "respond-to-incident", "tier": "hard", "split": "dev"},
-    {"id": "rt_oos_parental", "task": "what's our parental leave policy", "expected": "NONE", "tier": "standard", "split": "test"},
-    {"id": "rt_oos_shipping", "task": "customer wants to change their shipping address", "expected": "NONE", "tier": "hard", "split": "test"},
-    {"id": "rt_oos_password", "task": "how do I reset my password", "expected": "NONE", "tier": "easy", "split": "test"},
-    {"id": "rt_oos_hiring", "task": "what is the interview process for engineers", "expected": "NONE", "tier": "standard", "split": "test"},
-    {"id": "rt_oos_expense", "task": "how do I submit an expense report", "expected": "NONE", "tier": "hard", "split": "dev"},
-    {"id": "rt_oos_weather", "task": "what is the weather today", "expected": "NONE", "tier": "easy", "split": "test"}
-  ]
+ "_meta": {
+  "stage": "routing",
+  "feeds": "E4 + calibration (ECE)",
+  "note": "Balanced across explicit/paraphrase/oblique/near-miss + >=25% abstention. The `calib` split fits the resolver calibrator (Part B); `test` is the published number; nothing is tuned on `test` (INT-1/INT-2)."
+ },
+ "cases": [
+  {
+   "id": "rt001",
+   "task": "issue a refund for order 1234",
+   "expected": "handle-refund",
+   "tier": "easy",
+   "split": "test"
+  },
+  {
+   "id": "rt002",
+   "task": "a customer is angry and wants their money back",
+   "expected": "handle-refund",
+   "tier": "standard",
+   "split": "test"
+  },
+  {
+   "id": "rt003",
+   "task": "buyer is demanding a chargeback reversal",
+   "expected": "handle-refund",
+   "tier": "hard",
+   "split": "test"
+  },
+  {
+   "id": "rt004",
+   "task": "the customer is furious about being double charged",
+   "expected": "handle-refund",
+   "tier": "hard",
+   "split": "test"
+  },
+  {
+   "id": "rt005",
+   "task": "please reimburse this customer for their order",
+   "expected": "handle-refund",
+   "tier": "standard",
+   "split": "test"
+  },
+  {
+   "id": "rt006",
+   "task": "they want their money back on order 55",
+   "expected": "handle-refund",
+   "tier": "easy",
+   "split": "test"
+  },
+  {
+   "id": "rt007",
+   "task": "return the payment to the buyer",
+   "expected": "handle-refund",
+   "tier": "hard",
+   "split": "test"
+  },
+  {
+   "id": "rt008",
+   "task": "can we give this person a refund on the subscription",
+   "expected": "handle-refund",
+   "tier": "standard",
+   "split": "test"
+  },
+  {
+   "id": "rt009",
+   "task": "process a return and refund for a defective item",
+   "expected": "handle-refund",
+   "tier": "standard",
+   "split": "test"
+  },
+  {
+   "id": "rt010",
+   "task": "customer says the charge was wrong, wants it reversed",
+   "expected": "handle-refund",
+   "tier": "hard",
+   "split": "test"
+  },
+  {
+   "id": "rt011",
+   "task": "the customer is asking for a 30% discount",
+   "expected": "handle-pricing-exception",
+   "tier": "standard",
+   "split": "test"
+  },
+  {
+   "id": "rt012",
+   "task": "can we approve special pricing for this enterprise deal",
+   "expected": "handle-pricing-exception",
+   "tier": "standard",
+   "split": "test"
+  },
+  {
+   "id": "rt013",
+   "task": "deal desk needs to sign off on a discount",
+   "expected": "handle-pricing-exception",
+   "tier": "easy",
+   "split": "test"
+  },
+  {
+   "id": "rt014",
+   "task": "can we give BigCo a lower price on renewal",
+   "expected": "handle-pricing-exception",
+   "tier": "hard",
+   "split": "test"
+  },
+  {
+   "id": "rt015",
+   "task": "the prospect wants a markdown on the contract",
+   "expected": "handle-pricing-exception",
+   "tier": "hard",
+   "split": "test"
+  },
+  {
+   "id": "rt016",
+   "task": "approve a pricing exception for a strategic account",
+   "expected": "handle-pricing-exception",
+   "tier": "standard",
+   "split": "test"
+  },
+  {
+   "id": "rt017",
+   "task": "sales wants to offer 25 percent off",
+   "expected": "handle-pricing-exception",
+   "tier": "standard",
+   "split": "test"
+  },
+  {
+   "id": "rt018",
+   "task": "we need a discount approved before the quarter closes",
+   "expected": "handle-pricing-exception",
+   "tier": "hard",
+   "split": "test"
+  },
+  {
+   "id": "rt019",
+   "task": "production is down, looks like a sev1 outage",
+   "expected": "respond-to-incident",
+   "tier": "standard",
+   "split": "test"
+  },
+  {
+   "id": "rt020",
+   "task": "page the on-call engineer, the API is failing",
+   "expected": "respond-to-incident",
+   "tier": "easy",
+   "split": "test"
+  },
+  {
+   "id": "rt021",
+   "task": "we have a major service outage right now",
+   "expected": "respond-to-incident",
+   "tier": "standard",
+   "split": "test"
+  },
+  {
+   "id": "rt022",
+   "task": "checkout is throwing 500s for everyone",
+   "expected": "respond-to-incident",
+   "tier": "hard",
+   "split": "test"
+  },
+  {
+   "id": "rt023",
+   "task": "the database is unreachable and customers are impacted",
+   "expected": "respond-to-incident",
+   "tier": "hard",
+   "split": "test"
+  },
+  {
+   "id": "rt024",
+   "task": "declare an incident for the payment gateway being down",
+   "expected": "respond-to-incident",
+   "tier": "standard",
+   "split": "test"
+  },
+  {
+   "id": "rt025",
+   "task": "latency spiked and the site is basically unusable",
+   "expected": "respond-to-incident",
+   "tier": "hard",
+   "split": "test"
+  },
+  {
+   "id": "rt026",
+   "task": "kick off the incident response for the auth outage",
+   "expected": "respond-to-incident",
+   "tier": "standard",
+   "split": "test"
+  },
+  {
+   "id": "rt027",
+   "task": "what's our parental leave policy",
+   "expected": "NONE",
+   "tier": "standard",
+   "split": "test"
+  },
+  {
+   "id": "rt028",
+   "task": "customer wants to change their shipping address",
+   "expected": "NONE",
+   "tier": "hard",
+   "split": "test"
+  },
+  {
+   "id": "rt029",
+   "task": "how do I reset my password",
+   "expected": "NONE",
+   "tier": "easy",
+   "split": "test"
+  },
+  {
+   "id": "rt030",
+   "task": "what is the interview process for engineers",
+   "expected": "NONE",
+   "tier": "standard",
+   "split": "test"
+  },
+  {
+   "id": "rt031",
+   "task": "how do I submit an expense report",
+   "expected": "NONE",
+   "tier": "hard",
+   "split": "test"
+  },
+  {
+   "id": "rt032",
+   "task": "what is the weather today",
+   "expected": "NONE",
+   "tier": "easy",
+   "split": "test"
+  },
+  {
+   "id": "rt033",
+   "task": "where is the office holiday party",
+   "expected": "NONE",
+   "tier": "easy",
+   "split": "test"
+  },
+  {
+   "id": "rt034",
+   "task": "can you summarize this contract for me",
+   "expected": "NONE",
+   "tier": "standard",
+   "split": "test"
+  },
+  {
+   "id": "rt035",
+   "task": "what's the wifi password in the SF office",
+   "expected": "NONE",
+   "tier": "easy",
+   "split": "test"
+  },
+  {
+   "id": "rt036",
+   "task": "schedule a meeting with the sales team",
+   "expected": "NONE",
+   "tier": "standard",
+   "split": "test"
+  },
+  {
+   "id": "rt037",
+   "task": "translate this email into Spanish",
+   "expected": "NONE",
+   "tier": "easy",
+   "split": "test"
+  },
+  {
+   "id": "rt038",
+   "task": "what are our company values",
+   "expected": "NONE",
+   "tier": "standard",
+   "split": "test"
+  },
+  {
+   "id": "rt039",
+   "task": "update the customer's email address on file",
+   "expected": "NONE",
+   "tier": "hard",
+   "split": "test"
+  },
+  {
+   "id": "rt040",
+   "task": "how many vacation days do I have left",
+   "expected": "NONE",
+   "tier": "standard",
+   "split": "test"
+  },
+  {
+   "id": "rt041",
+   "task": "refund order 9001 please",
+   "expected": "handle-refund",
+   "tier": "easy",
+   "split": "calib"
+  },
+  {
+   "id": "rt042",
+   "task": "the customer wants a full refund",
+   "expected": "handle-refund",
+   "tier": "standard",
+   "split": "calib"
+  },
+  {
+   "id": "rt043",
+   "task": "reverse the charge on this account",
+   "expected": "handle-refund",
+   "tier": "hard",
+   "split": "calib"
+  },
+  {
+   "id": "rt044",
+   "task": "give them their money back, they're upset",
+   "expected": "handle-refund",
+   "tier": "standard",
+   "split": "calib"
+  },
+  {
+   "id": "rt045",
+   "task": "we need to refund a cancelled order",
+   "expected": "handle-refund",
+   "tier": "standard",
+   "split": "calib"
+  },
+  {
+   "id": "rt046",
+   "task": "customer is requesting a chargeback",
+   "expected": "handle-refund",
+   "tier": "hard",
+   "split": "calib"
+  },
+  {
+   "id": "rt047",
+   "task": "approve a 40% discount for the new logo",
+   "expected": "handle-pricing-exception",
+   "tier": "standard",
+   "split": "calib"
+  },
+  {
+   "id": "rt048",
+   "task": "deal desk pricing approval needed",
+   "expected": "handle-pricing-exception",
+   "tier": "easy",
+   "split": "calib"
+  },
+  {
+   "id": "rt049",
+   "task": "can sales offer a custom price here",
+   "expected": "handle-pricing-exception",
+   "tier": "hard",
+   "split": "calib"
+  },
+  {
+   "id": "rt050",
+   "task": "we want to discount the annual plan",
+   "expected": "handle-pricing-exception",
+   "tier": "standard",
+   "split": "calib"
+  },
+  {
+   "id": "rt051",
+   "task": "pricing exception for a multi-year deal",
+   "expected": "handle-pricing-exception",
+   "tier": "standard",
+   "split": "calib"
+  },
+  {
+   "id": "rt052",
+   "task": "the API is down, start incident response",
+   "expected": "respond-to-incident",
+   "tier": "standard",
+   "split": "calib"
+  },
+  {
+   "id": "rt053",
+   "task": "sev1: checkout outage, page oncall",
+   "expected": "respond-to-incident",
+   "tier": "easy",
+   "split": "calib"
+  },
+  {
+   "id": "rt054",
+   "task": "everything is erroring, we have an outage",
+   "expected": "respond-to-incident",
+   "tier": "hard",
+   "split": "calib"
+  },
+  {
+   "id": "rt055",
+   "task": "open an incident for the broken deploy",
+   "expected": "respond-to-incident",
+   "tier": "standard",
+   "split": "calib"
+  },
+  {
+   "id": "rt056",
+   "task": "the service is degraded for all users",
+   "expected": "respond-to-incident",
+   "tier": "hard",
+   "split": "calib"
+  },
+  {
+   "id": "rt057",
+   "task": "what time does the cafeteria open",
+   "expected": "NONE",
+   "tier": "easy",
+   "split": "calib"
+  },
+  {
+   "id": "rt058",
+   "task": "how do I connect to the VPN",
+   "expected": "NONE",
+   "tier": "standard",
+   "split": "calib"
+  },
+  {
+   "id": "rt059",
+   "task": "who is the new head of marketing",
+   "expected": "NONE",
+   "tier": "standard",
+   "split": "calib"
+  },
+  {
+   "id": "rt060",
+   "task": "book a conference room for tomorrow",
+   "expected": "NONE",
+   "tier": "easy",
+   "split": "calib"
+  },
+  {
+   "id": "rt061",
+   "task": "what's the dress code for client meetings",
+   "expected": "NONE",
+   "tier": "standard",
+   "split": "calib"
+  },
+  {
+   "id": "rt062",
+   "task": "remind me about the all-hands agenda",
+   "expected": "NONE",
+   "tier": "hard",
+   "split": "calib"
+  },
+  {
+   "id": "rt063",
+   "task": "order new laptops for the team",
+   "expected": "NONE",
+   "tier": "hard",
+   "split": "calib"
+  },
+  {
+   "id": "rt064",
+   "task": "what's our refund rate this quarter",
+   "expected": "NONE",
+   "tier": "hard",
+   "split": "calib"
+  },
+  {
+   "id": "rt065",
+   "task": "refund this order, customer changed their mind",
+   "expected": "handle-refund",
+   "tier": "standard",
+   "split": "dev"
+  },
+  {
+   "id": "rt066",
+   "task": "can we discount the enterprise tier",
+   "expected": "handle-pricing-exception",
+   "tier": "standard",
+   "split": "dev"
+  },
+  {
+   "id": "rt067",
+   "task": "the checkout service keeps erroring for everyone",
+   "expected": "respond-to-incident",
+   "tier": "hard",
+   "split": "dev"
+  },
+  {
+   "id": "rt068",
+   "task": "how do I file a PTO request",
+   "expected": "NONE",
+   "tier": "standard",
+   "split": "dev"
+  },
+  {
+   "id": "rt069",
+   "task": "what's the company mission statement",
+   "expected": "NONE",
+   "tier": "easy",
+   "split": "dev"
+  },
+  {
+   "id": "rt070",
+   "task": "escalate this angry customer's refund",
+   "expected": "handle-refund",
+   "tier": "hard",
+   "split": "dev"
+  },
+  {
+   "id": "rt071",
+   "task": "they billed me twice and I want it sorted out",
+   "expected": "handle-refund",
+   "tier": "hard",
+   "split": "test"
+  },
+  {
+   "id": "rt072",
+   "task": "we promised them a better rate to close the deal",
+   "expected": "handle-pricing-exception",
+   "tier": "hard",
+   "split": "test"
+  },
+  {
+   "id": "rt073",
+   "task": "users cannot log in and everyone is scrambling",
+   "expected": "respond-to-incident",
+   "tier": "hard",
+   "split": "test"
+  },
+  {
+   "id": "rt074",
+   "task": "the buyer thinks the invoice is way too high",
+   "expected": "handle-pricing-exception",
+   "tier": "hard",
+   "split": "test"
+  },
+  {
+   "id": "rt075",
+   "task": "nothing loads and the whole team is on a call",
+   "expected": "respond-to-incident",
+   "tier": "hard",
+   "split": "test"
+  }
+ ]
 }

@@ -87,21 +87,79 @@ def extraction_by_kind(results: list[dict]) -> dict:
     return out
 
 
-def _ece(routing_results: list[dict], bins: int = 5) -> float:
-    pts = [(r["detail"].get("confidence", 0.0), 1 if r["passed"] else 0) for r in routing_results]
+def _calib_points(routing_results: list[dict]) -> list[tuple[float, int]]:
+    """(calibrated_confidence, correct) over COMMITTED routing decisions only —
+    confidence is meaningful only when the resolver commits to a skill."""
+    return [(r["detail"].get("confidence", 0.0), 1 if r["passed"] else 0)
+            for r in routing_results if r["detail"].get("committed")]
+
+
+def _ece_from_points(pts: list[tuple[float, int]], bins: int = 10) -> float:
     if not pts:
         return 0.0
     total = len(pts)
     ece = 0.0
     for b in range(bins):
         lo, hi = b / bins, (b + 1) / bins
-        bucket = [(c, ok) for c, ok in pts if (lo <= c < hi) or (b == bins - 1 and c == 1.0)]
+        bucket = [(c, ok) for c, ok in pts if (lo <= c < hi) or (b == bins - 1 and c >= hi)]
         if not bucket:
             continue
         avg_conf = sum(c for c, _ in bucket) / len(bucket)
         acc = sum(ok for _, ok in bucket) / len(bucket)
         ece += (len(bucket) / total) * abs(acc - avg_conf)
-    return round(ece, 4)
+    return ece
+
+
+def _ece(routing_results: list[dict], bins: int = 10) -> float:
+    return round(_ece_from_points(_calib_points(routing_results), bins), 4)
+
+
+def ece_with_ci(routing_results: list[dict], bins: int = 10, n_boot: int = 2000, seed: int = 0) -> dict:
+    """Bootstrap 95% CI for ECE on the committed routing decisions (Part B/§7)."""
+    import random
+
+    pts = _calib_points(routing_results)
+    n = len(pts)
+    point = _ece_from_points(pts, bins)
+    if n < 2:
+        return {"ece": round(point, 4), "ci95": [round(point, 4), round(point, 4)], "n": n, "bins": bins}
+    rng = random.Random(seed)
+    boots = []
+    for _ in range(n_boot):
+        sample = [pts[rng.randrange(n)] for _ in range(n)]
+        boots.append(_ece_from_points(sample, bins))
+    boots.sort()
+    lo = boots[int(0.025 * n_boot)]
+    hi = boots[int(0.975 * n_boot)]
+    return {"ece": round(point, 4), "ci95": [round(lo, 4), round(hi, 4)], "n": n, "bins": bins}
+
+
+def reliability_bins(routing_results: list[dict], bins: int = 10) -> list[dict]:
+    pts = _calib_points(routing_results)
+    out = []
+    for b in range(bins):
+        lo, hi = b / bins, (b + 1) / bins
+        bucket = [(c, ok) for c, ok in pts if (lo <= c < hi) or (b == bins - 1 and c >= hi)]
+        if not bucket:
+            continue
+        out.append({"lo": round(lo, 2), "hi": round(hi, 2), "n": len(bucket),
+                    "avg_conf": round(sum(c for c, _ in bucket) / len(bucket), 3),
+                    "accuracy": round(sum(ok for _, ok in bucket) / len(bucket), 3)})
+    return out
+
+
+def metric_n(results: list[dict]) -> dict:
+    """Per-headline-metric denominators (n) for honest reporting (§7)."""
+    return {
+        "GAR": _rate(results, "guardrail")[1],
+        "SEC": _rate(results, "execution")[1],
+        "PER": _rate(results, "permission")[1],
+        "routing_top1": _rate(results, "routing", lambda r: not r["detail"].get("abstention_case"))[1],
+        "routing_abstention": _rate(results, "routing", lambda r: r["detail"].get("abstention_case"))[1],
+        "extraction": len([r for r in results if r["stage"] == "extraction" and not r["detail"].get("noise")]),
+        "synthesis_correctness": _rate(results, "synthesis")[1],
+        "compilation_fidelity": _rate(results, "compilation")[1],
+    }
 
 
 def aggregate(run_metrics: list[dict]) -> dict:

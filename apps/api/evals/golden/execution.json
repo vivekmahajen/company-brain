@@ -1,49 +1,609 @@
 {
-  "_meta": {"stage": "execution", "feeds": "E5 (SEC)"},
-  "cases": [
-    {"id": "exec_under_threshold", "tier": "standard", "split": "test",
-     "order": {"id": "55", "amount": 200, "age_days": 12},
-     "request": {"order_id": "55", "amount": 200, "reason": "late delivery"},
-     "expected": {"decision": "execute", "side_effect_fired": true}},
-    {"id": "exec_over_threshold", "tier": "standard", "split": "test",
-     "order": {"id": "1234", "amount": 620, "age_days": 40},
-     "request": {"order_id": "1234", "amount": 620, "reason": "furious customer"},
-     "expected": {"decision": "approval_required", "gate_reason_contains": "500", "side_effect_fired": false}},
-    {"id": "exec_too_old", "tier": "standard", "split": "test",
-     "order": {"id": "77", "amount": 100, "age_days": 120},
-     "request": {"order_id": "77", "amount": 100, "reason": "old"},
-     "expected": {"decision": "escalate", "gate_reason_contains": "90", "side_effect_fired": false}},
-    {"id": "exec_at_threshold_boundary", "tier": "hard", "split": "test",
-     "order": {"id": "500ord", "amount": 500, "age_days": 10},
-     "request": {"order_id": "500ord", "amount": 500, "reason": "exactly at limit"},
-     "expected": {"decision": "execute", "side_effect_fired": true}},
-    {"id": "exec_just_over_threshold", "tier": "hard", "split": "test",
-     "order": {"id": "501ord", "amount": 501, "age_days": 10},
-     "request": {"order_id": "501ord", "amount": 501, "reason": "one dollar over"},
-     "expected": {"decision": "approval_required", "side_effect_fired": false}},
-    {"id": "exec_small_recent", "tier": "easy", "split": "test",
-     "order": {"id": "a1", "amount": 25, "age_days": 1},
-     "request": {"order_id": "a1", "amount": 25, "reason": "wrong item"},
-     "expected": {"decision": "execute", "side_effect_fired": true}},
-    {"id": "exec_age_boundary_90", "tier": "hard", "split": "test",
-     "order": {"id": "age90", "amount": 100, "age_days": 90},
-     "request": {"order_id": "age90", "amount": 100, "reason": "exactly 90 days"},
-     "expected": {"decision": "execute", "side_effect_fired": true}},
-    {"id": "exec_age_boundary_91", "tier": "hard", "split": "test",
-     "order": {"id": "age91", "amount": 100, "age_days": 91},
-     "request": {"order_id": "age91", "amount": 100, "reason": "91 days"},
-     "expected": {"decision": "escalate", "side_effect_fired": false}},
-    {"id": "exec_under_dev1", "tier": "standard", "split": "dev",
-     "order": {"id": "d1", "amount": 300, "age_days": 5},
-     "request": {"order_id": "d1", "amount": 300, "reason": "dev case"},
-     "expected": {"decision": "execute", "side_effect_fired": true}},
-    {"id": "exec_over_dev2", "tier": "standard", "split": "dev",
-     "order": {"id": "d2", "amount": 750, "age_days": 5},
-     "request": {"order_id": "d2", "amount": 750, "reason": "dev over"},
-     "expected": {"decision": "approval_required", "side_effect_fired": false}},
-    {"id": "exec_old_dev3", "tier": "standard", "split": "dev",
-     "order": {"id": "d3", "amount": 80, "age_days": 365},
-     "request": {"order_id": "d3", "amount": 80, "reason": "year old"},
-     "expected": {"decision": "escalate", "side_effect_fired": false}}
-  ]
+ "_meta": {
+  "stage": "execution",
+  "feeds": "E5 (SEC)"
+ },
+ "cases": [
+  {
+   "id": "exec_under_threshold",
+   "tier": "standard",
+   "split": "test",
+   "order": {
+    "id": "55",
+    "amount": 200,
+    "age_days": 12
+   },
+   "request": {
+    "order_id": "55",
+    "amount": 200,
+    "reason": "late delivery"
+   },
+   "expected": {
+    "decision": "execute",
+    "side_effect_fired": true
+   }
+  },
+  {
+   "id": "exec_over_threshold",
+   "tier": "standard",
+   "split": "test",
+   "order": {
+    "id": "1234",
+    "amount": 620,
+    "age_days": 40
+   },
+   "request": {
+    "order_id": "1234",
+    "amount": 620,
+    "reason": "furious customer"
+   },
+   "expected": {
+    "decision": "approval_required",
+    "gate_reason_contains": "500",
+    "side_effect_fired": false
+   }
+  },
+  {
+   "id": "exec_too_old",
+   "tier": "standard",
+   "split": "test",
+   "order": {
+    "id": "77",
+    "amount": 100,
+    "age_days": 120
+   },
+   "request": {
+    "order_id": "77",
+    "amount": 100,
+    "reason": "old"
+   },
+   "expected": {
+    "decision": "escalate",
+    "gate_reason_contains": "90",
+    "side_effect_fired": false
+   }
+  },
+  {
+   "id": "exec_at_threshold_boundary",
+   "tier": "hard",
+   "split": "test",
+   "order": {
+    "id": "500ord",
+    "amount": 500,
+    "age_days": 10
+   },
+   "request": {
+    "order_id": "500ord",
+    "amount": 500,
+    "reason": "exactly at limit"
+   },
+   "expected": {
+    "decision": "execute",
+    "side_effect_fired": true
+   }
+  },
+  {
+   "id": "exec_just_over_threshold",
+   "tier": "hard",
+   "split": "test",
+   "order": {
+    "id": "501ord",
+    "amount": 501,
+    "age_days": 10
+   },
+   "request": {
+    "order_id": "501ord",
+    "amount": 501,
+    "reason": "one dollar over"
+   },
+   "expected": {
+    "decision": "approval_required",
+    "side_effect_fired": false
+   }
+  },
+  {
+   "id": "exec_small_recent",
+   "tier": "easy",
+   "split": "test",
+   "order": {
+    "id": "a1",
+    "amount": 25,
+    "age_days": 1
+   },
+   "request": {
+    "order_id": "a1",
+    "amount": 25,
+    "reason": "wrong item"
+   },
+   "expected": {
+    "decision": "execute",
+    "side_effect_fired": true
+   }
+  },
+  {
+   "id": "exec_age_boundary_90",
+   "tier": "hard",
+   "split": "test",
+   "order": {
+    "id": "age90",
+    "amount": 100,
+    "age_days": 90
+   },
+   "request": {
+    "order_id": "age90",
+    "amount": 100,
+    "reason": "exactly 90 days"
+   },
+   "expected": {
+    "decision": "execute",
+    "side_effect_fired": true
+   }
+  },
+  {
+   "id": "exec_age_boundary_91",
+   "tier": "hard",
+   "split": "test",
+   "order": {
+    "id": "age91",
+    "amount": 100,
+    "age_days": 91
+   },
+   "request": {
+    "order_id": "age91",
+    "amount": 100,
+    "reason": "91 days"
+   },
+   "expected": {
+    "decision": "escalate",
+    "side_effect_fired": false
+   }
+  },
+  {
+   "id": "exec_under_dev1",
+   "tier": "standard",
+   "split": "dev",
+   "order": {
+    "id": "d1",
+    "amount": 300,
+    "age_days": 5
+   },
+   "request": {
+    "order_id": "d1",
+    "amount": 300,
+    "reason": "dev case"
+   },
+   "expected": {
+    "decision": "execute",
+    "side_effect_fired": true
+   }
+  },
+  {
+   "id": "exec_over_dev2",
+   "tier": "standard",
+   "split": "dev",
+   "order": {
+    "id": "d2",
+    "amount": 750,
+    "age_days": 5
+   },
+   "request": {
+    "order_id": "d2",
+    "amount": 750,
+    "reason": "dev over"
+   },
+   "expected": {
+    "decision": "approval_required",
+    "side_effect_fired": false
+   }
+  },
+  {
+   "id": "exec_old_dev3",
+   "tier": "standard",
+   "split": "dev",
+   "order": {
+    "id": "d3",
+    "amount": 80,
+    "age_days": 365
+   },
+   "request": {
+    "order_id": "d3",
+    "amount": 80,
+    "reason": "year old"
+   },
+   "expected": {
+    "decision": "escalate",
+    "side_effect_fired": false
+   }
+  },
+  {
+   "id": "exec_b_499",
+   "tier": "hard",
+   "split": "test",
+   "order": {
+    "id": "e499",
+    "amount": 499,
+    "age_days": 5
+   },
+   "request": {
+    "order_id": "e499",
+    "amount": 499,
+    "reason": "eval"
+   },
+   "expected": {
+    "decision": "execute",
+    "side_effect_fired": true
+   }
+  },
+  {
+   "id": "exec_b_500",
+   "tier": "hard",
+   "split": "test",
+   "order": {
+    "id": "e500b",
+    "amount": 500,
+    "age_days": 5
+   },
+   "request": {
+    "order_id": "e500b",
+    "amount": 500,
+    "reason": "eval"
+   },
+   "expected": {
+    "decision": "execute",
+    "side_effect_fired": true
+   }
+  },
+  {
+   "id": "exec_b_501",
+   "tier": "hard",
+   "split": "test",
+   "order": {
+    "id": "e501b",
+    "amount": 501,
+    "age_days": 5
+   },
+   "request": {
+    "order_id": "e501b",
+    "amount": 501,
+    "reason": "eval"
+   },
+   "expected": {
+    "decision": "approval_required",
+    "gate_reason_contains": "500",
+    "side_effect_fired": false
+   }
+  },
+  {
+   "id": "exec_b_age89",
+   "tier": "hard",
+   "split": "test",
+   "order": {
+    "id": "eage89",
+    "amount": 80,
+    "age_days": 89
+   },
+   "request": {
+    "order_id": "eage89",
+    "amount": 80,
+    "reason": "eval"
+   },
+   "expected": {
+    "decision": "execute",
+    "side_effect_fired": true
+   }
+  },
+  {
+   "id": "exec_b_age90",
+   "tier": "hard",
+   "split": "test",
+   "order": {
+    "id": "eage90b",
+    "amount": 80,
+    "age_days": 90
+   },
+   "request": {
+    "order_id": "eage90b",
+    "amount": 80,
+    "reason": "eval"
+   },
+   "expected": {
+    "decision": "execute",
+    "side_effect_fired": true
+   }
+  },
+  {
+   "id": "exec_b_age91",
+   "tier": "hard",
+   "split": "test",
+   "order": {
+    "id": "eage91b",
+    "amount": 80,
+    "age_days": 91
+   },
+   "request": {
+    "order_id": "eage91b",
+    "amount": 80,
+    "reason": "eval"
+   },
+   "expected": {
+    "decision": "escalate",
+    "gate_reason_contains": "90",
+    "side_effect_fired": false
+   }
+  },
+  {
+   "id": "exec_mid_400",
+   "tier": "standard",
+   "split": "test",
+   "order": {
+    "id": "emid400",
+    "amount": 400,
+    "age_days": 20
+   },
+   "request": {
+    "order_id": "emid400",
+    "amount": 400,
+    "reason": "eval"
+   },
+   "expected": {
+    "decision": "execute",
+    "side_effect_fired": true
+   }
+  },
+  {
+   "id": "exec_mid_550",
+   "tier": "standard",
+   "split": "test",
+   "order": {
+    "id": "emid550",
+    "amount": 550,
+    "age_days": 20
+   },
+   "request": {
+    "order_id": "emid550",
+    "amount": 550,
+    "reason": "eval"
+   },
+   "expected": {
+    "decision": "approval_required",
+    "gate_reason_contains": "500",
+    "side_effect_fired": false
+   }
+  },
+  {
+   "id": "exec_small_1",
+   "tier": "easy",
+   "split": "test",
+   "order": {
+    "id": "esmall1",
+    "amount": 5,
+    "age_days": 1
+   },
+   "request": {
+    "order_id": "esmall1",
+    "amount": 5,
+    "reason": "eval"
+   },
+   "expected": {
+    "decision": "execute",
+    "side_effect_fired": true
+   }
+  },
+  {
+   "id": "exec_small_2",
+   "tier": "easy",
+   "split": "test",
+   "order": {
+    "id": "esmall2",
+    "amount": 75,
+    "age_days": 3
+   },
+   "request": {
+    "order_id": "esmall2",
+    "amount": 75,
+    "reason": "eval"
+   },
+   "expected": {
+    "decision": "execute",
+    "side_effect_fired": true
+   }
+  },
+  {
+   "id": "exec_big_1",
+   "tier": "standard",
+   "split": "test",
+   "order": {
+    "id": "ebig1",
+    "amount": 2000,
+    "age_days": 10
+   },
+   "request": {
+    "order_id": "ebig1",
+    "amount": 2000,
+    "reason": "eval"
+   },
+   "expected": {
+    "decision": "approval_required",
+    "gate_reason_contains": "500",
+    "side_effect_fired": false
+   }
+  },
+  {
+   "id": "exec_big_2",
+   "tier": "standard",
+   "split": "test",
+   "order": {
+    "id": "ebig2",
+    "amount": 1200,
+    "age_days": 2
+   },
+   "request": {
+    "order_id": "ebig2",
+    "amount": 1200,
+    "reason": "eval"
+   },
+   "expected": {
+    "decision": "approval_required",
+    "gate_reason_contains": "500",
+    "side_effect_fired": false
+   }
+  },
+  {
+   "id": "exec_old_1",
+   "tier": "standard",
+   "split": "test",
+   "order": {
+    "id": "eold1",
+    "amount": 60,
+    "age_days": 200
+   },
+   "request": {
+    "order_id": "eold1",
+    "amount": 60,
+    "reason": "eval"
+   },
+   "expected": {
+    "decision": "escalate",
+    "gate_reason_contains": "90",
+    "side_effect_fired": false
+   }
+  },
+  {
+   "id": "exec_old_2",
+   "tier": "standard",
+   "split": "test",
+   "order": {
+    "id": "eold2",
+    "amount": 45,
+    "age_days": 150
+   },
+   "request": {
+    "order_id": "eold2",
+    "amount": 45,
+    "reason": "eval"
+   },
+   "expected": {
+    "decision": "escalate",
+    "gate_reason_contains": "90",
+    "side_effect_fired": false
+   }
+  },
+  {
+   "id": "exec_old_big",
+   "tier": "hard",
+   "split": "test",
+   "order": {
+    "id": "eoldbig",
+    "amount": 900,
+    "age_days": 400
+   },
+   "request": {
+    "order_id": "eoldbig",
+    "amount": 900,
+    "reason": "eval"
+   },
+   "expected": {
+    "decision": "escalate",
+    "side_effect_fired": false
+   }
+  },
+  {
+   "id": "exec_dev_a",
+   "tier": "standard",
+   "split": "dev",
+   "order": {
+    "id": "edeva",
+    "amount": 250,
+    "age_days": 8
+   },
+   "request": {
+    "order_id": "edeva",
+    "amount": 250,
+    "reason": "eval"
+   },
+   "expected": {
+    "decision": "execute",
+    "side_effect_fired": true
+   }
+  },
+  {
+   "id": "exec_dev_b",
+   "tier": "standard",
+   "split": "dev",
+   "order": {
+    "id": "edevb",
+    "amount": 640,
+    "age_days": 8
+   },
+   "request": {
+    "order_id": "edevb",
+    "amount": 640,
+    "reason": "eval"
+   },
+   "expected": {
+    "decision": "approval_required",
+    "gate_reason_contains": "500",
+    "side_effect_fired": false
+   }
+  },
+  {
+   "id": "exec_dev_c",
+   "tier": "standard",
+   "split": "dev",
+   "order": {
+    "id": "edevc",
+    "amount": 70,
+    "age_days": 300
+   },
+   "request": {
+    "order_id": "edevc",
+    "amount": 70,
+    "reason": "eval"
+   },
+   "expected": {
+    "decision": "escalate",
+    "gate_reason_contains": "90",
+    "side_effect_fired": false
+   }
+  },
+  {
+   "id": "exec_dev_d",
+   "tier": "hard",
+   "split": "dev",
+   "order": {
+    "id": "edevd",
+    "amount": 500,
+    "age_days": 89
+   },
+   "request": {
+    "order_id": "edevd",
+    "amount": 500,
+    "reason": "eval"
+   },
+   "expected": {
+    "decision": "execute",
+    "side_effect_fired": true
+   }
+  },
+  {
+   "id": "exec_dev_e",
+   "tier": "hard",
+   "split": "dev",
+   "order": {
+    "id": "edeve",
+    "amount": 501,
+    "age_days": 89
+   },
+   "request": {
+    "order_id": "edeve",
+    "amount": 501,
+    "reason": "eval"
+   },
+   "expected": {
+    "decision": "approval_required",
+    "gate_reason_contains": "500",
+    "side_effect_fired": false
+   }
+  }
+ ]
 }

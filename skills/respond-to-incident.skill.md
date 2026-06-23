@@ -28,14 +28,14 @@ guardrails:
   - Never downgrade incident severity without incident commander sign-off.
   - Never close the incident channel before the post-mortem is published.
 provenance:
-  - ku: 2d94b10f  source: notion/Incident Response Runbook 2026-02-10  span: "Never resolve a Sev1 incident without a written post-mortem."
-  - ku: ab693225  source: notion/Incident Response Runbook 2026-02-10  span: "1. Classify the severity of the incident."
-  - ku: cdf3f28d  source: notion/Incident Response Runbook 2026-02-10  span: "2. Page the on-call engineer for the affected service."
-  - ku: f2f52850  source: notion/Incident Response Runbook 2026-02-10  span: "3. Open an incident channel and post a status update."
-  - ku: 7e943cea  source: github/acme/platform (incidents) 2026-02-12  span: "Never deploy code during an active Sev1 incident."
-  - ku: 1744ee25  source: github/Postmortem: checkout Sev1 outage 2026-02-13  span: "Never roll out schema changes during an active incident with"
-  - ku: d1c061f4  source: linear/Sev1 incident: checkout outage 2026-02-12  span: "Never downgrade incident severity without incident commander"
-  - ku: d4f18bae  source: transcript/Checkout Sev1 incident retro 2026-02-14  span: "Never close the incident channel before the post-mortem is p"
+  - ku: c0297cba  source: notion/Incident Response Runbook 2026-02-10  span: "Never resolve a Sev1 incident without a written post-mortem."
+  - ku: 92da7ff2  source: notion/Incident Response Runbook 2026-02-10  span: "1. Classify the severity of the incident."
+  - ku: dce83818  source: notion/Incident Response Runbook 2026-02-10  span: "2. Page the on-call engineer for the affected service."
+  - ku: f1103e09  source: notion/Incident Response Runbook 2026-02-10  span: "3. Open an incident channel and post a status update."
+  - ku: 70d66bb2  source: github/acme/platform (incidents) 2026-02-12  span: "Never deploy code during an active Sev1 incident."
+  - ku: dac162ca  source: github/Postmortem: checkout Sev1 outage 2026-02-13  span: "Never roll out schema changes during an active incident with"
+  - ku: 232f32de  source: linear/Sev1 incident: checkout outage 2026-02-12  span: "Never downgrade incident severity without incident commander"
+  - ku: 1e7b3f09  source: transcript/Checkout Sev1 incident retro 2026-02-14  span: "Never close the incident channel before the post-mortem is p"
 ---
 
 ## When to use
