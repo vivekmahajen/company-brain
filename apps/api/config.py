@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -12,8 +12,20 @@ class Settings(BaseSettings):
 
     # --- Database ---------------------------------------------------------
     # Defaults to a local SQLite file so the demo + evals run with zero infra.
-    # In production set DATABASE_URL to postgresql+psycopg://... (pgvector).
+    # In production set DATABASE_URL to a Postgres URL. Railway/Heroku-style
+    # `postgres://` and bare `postgresql://` URLs are auto-normalized to the
+    # psycopg 3 driver (`postgresql+psycopg://`) below, so you can paste the
+    # value Railway gives you verbatim.
     database_url: str = Field(default="sqlite+pysqlite:///./company_brain.db")
+
+    @field_validator("database_url")
+    @classmethod
+    def _normalize_db_url(cls, v: str) -> str:
+        if v.startswith("postgres://"):
+            v = "postgresql+psycopg://" + v[len("postgres://"):]
+        elif v.startswith("postgresql://"):
+            v = "postgresql+psycopg://" + v[len("postgresql://"):]
+        return v
 
     # --- LLM --------------------------------------------------------------
     # "fixture" => deterministic, offline, no key required (default).
