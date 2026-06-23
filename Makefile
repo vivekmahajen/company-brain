@@ -19,6 +19,12 @@ eval:
 eval-ci:
 	python -m apps.api.evals.run --ci --n 1 --no-persist
 
+# Run against the real Anthropic model for genuine CIs + model-measured judge κ.
+# Requires ANTHROPIC_API_KEY in the environment. Start with N=1 to sanity-check
+# cost, then the default 5-run for a publishable number.
+eval-live:
+	LLM_PROVIDER=anthropic python -m apps.api.evals.run --n 5
+
 # REST API (console backend + non-MCP agents).
 api:
 	uvicorn apps.api.main:app --reload --port 8000

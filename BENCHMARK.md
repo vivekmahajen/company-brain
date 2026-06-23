@@ -47,6 +47,41 @@ Runs offline and deterministically with the fixture provider (no API key). With
 The high ECE is not a bug in the harness — it is the harness correctly surfacing that the
 resolver's confidence scores are not yet calibrated to accuracy. It is reported, not gated.
 
+## Running against a real model (genuine CIs + model-measured κ)
+
+The default `make eval` uses the deterministic fixture provider — perfect for CI
+(reproducible, free, offline) but its extraction is rule-based, so extraction F1
+is 100% by construction and CIs are ±0. For a **publishable** number, run against
+the real model:
+
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...
+make eval-live          # LLM_PROVIDER=anthropic, N=5
+# sanity-check cost first:  LLM_PROVIDER=anthropic python -m apps.api.evals.run --n 1
+```
+
+What changes, and how to read it:
+
+- **Confidence intervals become real.** The 5 runs vary with model
+  nondeterminism, so metrics report genuine `mean ± 95% CI` (TRUST-4) instead of
+  ±0. A single-run number is never published.
+- **Judge κ is model-measured.** The semantic-equivalence judge uses the model
+  with 3× self-consistency voting and is scored against the human-labeled set;
+  the reported κ replaces the offline token-overlap proxy (≈0.75). If κ < 0.7,
+  judge-dependent metrics are flagged low-trust.
+- **Extraction F1 / provenance become real quality signals** — expect them below
+  the fixture's 100%; that is the measurement, not a regression.
+- **GAR / PER / SEC stay 100%** — they are deterministic (server-side gates +
+  visibility), independent of the extraction model. Movement there is a real
+  finding, not noise.
+- **Attribution** records `model_id` + snapshot + provider, so the scorecard is
+  tied to the exact model it was measured on (TRUST-6).
+- **Cost:** a 5-run full suite is a few hundred calls (Opus for
+  extraction/compile, Haiku for the classify gate). Use `--n 1` to estimate first.
+
+The published CBE number should come from `eval-live` on the `test` split; the
+fixture `make eval` is the always-green CI regression gate.
+
 ## What each eval measures
 
 | # | Eval | Method | Judge? |
