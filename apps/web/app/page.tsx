@@ -76,8 +76,21 @@ export default function Dashboard() {
         </p>
       </div>
 
+      <section className="rounded-lg border border-emerald-800 bg-emerald-900/10 p-4">
+        <h2 className="text-lg font-medium">New here? Run the guided demo</h2>
+        <p className="mt-1 text-sm text-neutral-400">
+          One click tells the whole story: sources → governed, executable, permissions-aware skills.
+        </p>
+        <a
+          href="/demo"
+          className="mt-3 inline-block rounded bg-emerald-600 px-4 py-2 text-sm font-semibold hover:bg-emerald-500"
+        >
+          ▶ Open the guided demo
+        </a>
+      </section>
+
       <section className="rounded-lg border border-neutral-800 p-4">
-        <button onClick={runPipeline} className="rounded bg-emerald-600 px-4 py-2 text-sm font-medium hover:bg-emerald-500">
+        <button onClick={runPipeline} className="rounded bg-neutral-700 px-4 py-2 text-sm font-medium hover:bg-neutral-600">
           Rebuild the Brain
         </button>
         {pipelineMsg && <p className="mt-3 text-sm text-neutral-300">{pipelineMsg}</p>}
