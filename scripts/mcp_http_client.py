@@ -61,6 +61,11 @@ def main() -> None:
         print(__doc__)
         raise SystemExit(2)
     url, token = sys.argv[1], sys.argv[2]
+    # Streamable HTTP needs the exact mount path; some proxies (e.g. Railway)
+    # won't follow the no-slash -> slash redirect for the streaming POST, which
+    # looks like a hang. Normalize to a trailing slash.
+    if url.rstrip("/").endswith("/mcp"):
+        url = url.rstrip("/") + "/"
     try:
         asyncio.run(asyncio.wait_for(run(url, token), timeout=60))
     except asyncio.TimeoutError:
