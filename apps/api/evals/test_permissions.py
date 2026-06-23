@@ -40,8 +40,16 @@ def test_worked_example_sales_cannot_see_refund(eval_brain):
     assert not in_list and not has_tool and not can_get
 
 
-def test_sales_sees_public_skills(eval_brain):
-    in_list, _, can_get = _surfaces("agent-sales-token", "respond-to-incident")
+def test_sales_sees_only_its_domain(eval_brain):
+    # Sales sees pricing (its domain) but not eng's incident skill (private repo).
+    in_list, _, can_get = _surfaces("agent-sales-token", "handle-pricing-exception")
+    assert in_list and can_get
+    inc_list, _, inc_get = _surfaces("agent-sales-token", "respond-to-incident")
+    assert not inc_list and not inc_get  # cross-source: drawn from a private repo
+
+
+def test_eng_sees_incident(eval_brain):
+    in_list, _, can_get = _surfaces("agent-eng-token", "respond-to-incident")
     assert in_list and can_get
 
 

@@ -1,0 +1,22 @@
+{
+  "brand": "acme-support",
+  "tickets": [
+    {
+      "id": "7001",
+      "subject": "Refund request for order 1234",
+      "description": "Customer requests a refund. Never refund a digital goods order after the license key has been activated.",
+      "requester": "customer@example.com",
+      "status": "open",
+      "updated_at": "2026-03-01T10:00:00Z",
+      "comments": [
+        {
+          "id": "zdc-1",
+          "body": "Refunds above $500 require manager sign-off before processing.",
+          "author": "agent@acme.com",
+          "author_role": "agent",
+          "updated_at": "2026-03-01T11:00:00Z"
+        }
+      ]
+    }
+  ]
+}

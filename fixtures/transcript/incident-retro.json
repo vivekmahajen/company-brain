@@ -1,0 +1,14 @@
+{
+  "calls": [
+    {
+      "id": "retro-2026-02-14",
+      "title": "Checkout Sev1 incident retro",
+      "occurred_at": "2026-02-14T15:00:00Z",
+      "host": "ic@acme.com",
+      "segments": [
+        {"speaker": "IC", "text": "Thanks for joining the retro on the checkout incident."},
+        {"speaker": "SRE", "text": "Never close the incident channel before the post-mortem is published."}
+      ]
+    }
+  ]
+}

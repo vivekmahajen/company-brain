@@ -61,26 +61,34 @@ def sync_source(db: Session, source: Source, *, org_id: str | None = None) -> di
 
 import os
 
-# Default fixture sources for the bundled demo (refund + pricing + incident).
-# Each entry: (connector kind, display name, fixture file under fixtures/).
+# Default fixture sources spanning all connector kinds. Each entry:
+# (kind, display name, fixture file, mirrored ACL groups). The ACL groups make
+# the multi-source skills role-restricted (refund→support, pricing→sales,
+# incident→eng) — see access/seed.py.
 _DEFAULT_SOURCES = [
-    ("slack", "#support", "slack/support.json"),
-    ("notion", "Refund Policy Space", "notion/refund-policy.json"),
-    ("notion", "Pricing Policy Space", "notion/pricing-policy.json"),
-    ("notion", "Incident Runbook Space", "notion/incident-runbook.json"),
+    ("slack", "#support", "slack/support.json", ["support-team"]),
+    ("notion", "Refund Policy Space", "notion/refund-policy.json", ["all-staff"]),
+    ("notion", "Pricing Policy Space", "notion/pricing-policy.json", ["all-staff"]),
+    ("notion", "Incident Runbook Space", "notion/incident-runbook.json", ["all-staff"]),
+    ("github", "acme/platform (incidents)", "github/incident.json", ["eng-team"]),
+    ("linear", "core team (incidents)", "linear/incidents.json", ["eng-team"]),
+    ("transcript", "Incident retros", "transcript/incident-retro.json", ["eng-team"]),
+    ("transcript", "Sales calls", "transcript/sales-call.json", ["sales-team"]),
+    ("gmail", "deal-desk@acme.com", "gmail/deal-desk.json", ["sales-team"]),
+    ("postgres", "pricing & orders DB", "postgres/pricing.json", ["all-staff"]),
+    ("zendesk", "support tickets", "zendesk/tickets.json", ["support-team"]),
 ]
 
 
 def sync_default_sources(db: Session, org_id: str | None = None) -> list[dict]:
-    """Connect + sync the bundled Slack + Notion fixture sources (idempotent)."""
+    """Connect + sync the bundled fixture sources across all connector kinds."""
     org_id = org_id or get_settings().default_org_id
     fixtures_dir = get_settings().fixtures_dir
     results = []
-    for kind, name, rel in _DEFAULT_SOURCES:
-        config = {"fixture_path": os.path.join(fixtures_dir, rel)}
+    for kind, name, rel, acl_groups in _DEFAULT_SOURCES:
+        config = {"fixture_path": os.path.join(fixtures_dir, rel), "acl_groups": acl_groups}
         src = ensure_source(db, org_id=org_id, kind=kind, name=name, config=config)
-        # keep config current if the source already existed
-        if src.config_jsonb != config:
+        if src.config_jsonb != config:  # keep config current if it already existed
             src.config_jsonb = config
             db.flush()
         results.append(sync_source(db, src, org_id=org_id))

@@ -48,6 +48,42 @@
      "expected_units": [{"type": "policy_rule", "terms": ["never exceed", "original"]}], "expected_absent": false},
     {"id": "ext_pricing_dev", "tier": "standard", "split": "dev", "kind": "notion_page",
      "content": "Discounts above 20% require manager sign-off for any pricing exception.",
-     "expected_units": [{"type": "policy_rule", "terms": ["20%", "manager"]}], "expected_absent": false}
+     "expected_units": [{"type": "policy_rule", "terms": ["20%", "manager"]}], "expected_absent": false},
+
+    {"id": "ext_github_postmortem", "tier": "standard", "split": "test", "kind": "github_doc",
+     "content": "Postmortem: checkout Sev1 outage\nNever roll out schema changes during an active incident without a backout plan.",
+     "expected_units": [{"type": "policy_rule", "terms": ["never", "schema"], "must_have_span": "schema changes"}], "expected_absent": false},
+    {"id": "ext_github_noise_lgtm", "tier": "easy", "split": "test", "kind": "github_comment",
+     "content": "+1 lgtm ship it", "expected_units": [], "expected_absent": true, "expected_absent_reason": "PR chatter"},
+
+    {"id": "ext_linear_severity", "tier": "standard", "split": "test", "kind": "linear_issue",
+     "content": "Sev1 incident: checkout outage. Never downgrade incident severity without incident commander sign-off.",
+     "expected_units": [{"type": "policy_rule", "terms": ["never", "severity"]}], "expected_absent": false},
+    {"id": "ext_linear_noise_bump", "tier": "easy", "split": "dev", "kind": "linear_comment",
+     "content": "bumping this, any update?", "expected_units": [], "expected_absent": true, "expected_absent_reason": "ticket chatter"},
+
+    {"id": "ext_email_dealdesk", "tier": "standard", "split": "test", "kind": "email",
+     "content": "Re: BigCo pricing exception\nNever approve a discount above 50% without CFO sign-off.",
+     "expected_units": [{"type": "policy_rule", "terms": ["never", "50%"]}], "expected_absent": false},
+    {"id": "ext_email_noise_ooo", "tier": "easy", "split": "test", "kind": "email",
+     "content": "Out of office until Monday. I will reply when I return.", "expected_units": [], "expected_absent": true, "expected_absent_reason": "auto-reply"},
+
+    {"id": "ext_transcript_pricing", "tier": "standard", "split": "test", "kind": "transcript",
+     "content": "I told them we'd do 20% off on enterprise pricing. Never promise custom pricing on a call without deal desk confirmation.",
+     "expected_units": [{"type": "policy_rule", "terms": ["never", "pricing"]}], "expected_absent": false},
+    {"id": "ext_transcript_noise_smalltalk", "tier": "easy", "split": "dev", "kind": "transcript",
+     "content": "Yeah how was your weekend? Pretty good thanks, you?", "expected_units": [], "expected_absent": true, "expected_absent_reason": "small talk"},
+
+    {"id": "ext_postgres_metric", "tier": "standard", "split": "test", "kind": "db_row",
+     "content": "Pricing tier Enterprise is measured as $50 per seat per month.",
+     "expected_units": [{"type": "metric_definition", "terms": ["measured as", "enterprise"]}], "expected_absent": false},
+    {"id": "ext_postgres_noise_row", "tier": "easy", "split": "test", "kind": "db_row",
+     "content": "user 12 last login 2026-01-01", "expected_units": [], "expected_absent": true, "expected_absent_reason": "operational row, not knowledge"},
+
+    {"id": "ext_zendesk_guardrail", "tier": "standard", "split": "test", "kind": "zendesk_ticket",
+     "content": "Refund request for order 1234. Never refund a digital goods order after the license key has been activated.",
+     "expected_units": [{"type": "policy_rule", "terms": ["never", "refund"]}], "expected_absent": false},
+    {"id": "ext_zendesk_noise_thanks", "tier": "easy", "split": "dev", "kind": "zendesk_comment",
+     "content": "Thanks, that worked!", "expected_units": [], "expected_absent": true, "expected_absent_reason": "resolution chatter"}
   ]
 }

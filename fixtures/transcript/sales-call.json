@@ -1,0 +1,11 @@
+{
+  "calls": [
+    {
+      "id": "sales-bigco-2026-02-09",
+      "title": "BigCo pricing discussion",
+      "occurred_at": "2026-02-09T16:00:00Z",
+      "host": "ae@acme.com",
+      "vtt": "WEBVTT\n\n00:00.000 --> 00:04.000\n<v AE>I told them we'd do 20% off on the enterprise pricing.\n\n00:04.000 --> 00:09.000\n<v Manager>Never promise custom pricing on a call without deal desk confirmation."
+    }
+  ]
+}

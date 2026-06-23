@@ -1,0 +1,14 @@
+{
+  "mailbox": "deal-desk@acme.com",
+  "owner_group": "sales-team",
+  "messages": [
+    {
+      "id": "gm-1",
+      "thread_id": "th-bigco",
+      "from": "deal-desk@acme.com",
+      "date": "2026-02-10T12:00:00Z",
+      "subject": "Re: BigCo pricing exception",
+      "body": "Approved a 15% discount for BigCo.\nNever approve a discount above 50% without CFO sign-off.\n\nOn Mon, sales wrote:\n> Can we get a discount approved for BigCo?\n\n-- \nDeal Desk\nAcme Inc"
+    }
+  ]
+}

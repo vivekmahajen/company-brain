@@ -64,6 +64,14 @@ def to_markdown(sc: dict) -> str:
             L.append(f"| {label} | {_fmt(m[key])} |")
     j = sc["judge"]
     L.append(f"| Judge agreement (κ vs human) | {j['kappa']}{' ⚠ low-trust' if j['low_trust'] else ''} |")
+    if sc.get("extraction_by_kind"):
+        L.append("\n## Extraction F1 by source kind\n")
+        L.append("| Source kind | F1 | Noise rejection | Cases |")
+        L.append("|---|---|---|---|")
+        for kind, v in sc["extraction_by_kind"].items():
+            nr = "—" if v["noise_rejection"] is None else f"{v['noise_rejection']*100:.0f}%"
+            f1 = "—" if v["f1"] is None else f"{v['f1']:.2f}"
+            L.append(f"| {kind} | {f1} | {nr} | {v['cases']} |")
     L.append("\n## Dataset\n")
     for stage, c in sc["dataset_counts"].items():
         L.append(f"- {stage}: {c['total']} cases ({c['test']} test / {c['dev']} dev)")

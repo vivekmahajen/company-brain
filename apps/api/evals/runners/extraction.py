@@ -44,7 +44,7 @@ def run(db: Session, split: str | None = "test") -> list[dict]:
                 results.append({
                     "stage": "extraction", "case_id": case["id"], "tier": case["tier"], "split": case["split"],
                     "passed": ok, "judge_used": False, "error": None,
-                    "detail": {"noise": True, "extracted": len(units), "tp": 0, "fp": len(units), "fn": 0,
+                    "detail": {"kind": case.get("kind"), "noise": True, "extracted": len(units), "tp": 0, "fp": len(units), "fn": 0,
                                "prov_ok": 0, "prov_total": 0},
                 })
                 continue
@@ -59,13 +59,13 @@ def run(db: Session, split: str | None = "test") -> list[dict]:
             results.append({
                 "stage": "extraction", "case_id": case["id"], "tier": case["tier"], "split": case["split"],
                 "passed": ok, "judge_used": False, "error": None,
-                "detail": {"noise": False, "tp": tp, "fp": fp, "fn": fn,
+                "detail": {"kind": case.get("kind"), "noise": False, "tp": tp, "fp": fp, "fn": fn,
                            "prov_ok": prov_ok, "prov_total": prov_total},
             })
         except Exception as e:  # noqa: BLE001 - fail closed
             results.append({
                 "stage": "extraction", "case_id": case["id"], "tier": case["tier"], "split": case["split"],
                 "passed": False, "judge_used": False, "error": f"{type(e).__name__}: {e}",
-                "detail": {"tp": 0, "fp": 0, "fn": 99, "prov_ok": 0, "prov_total": 0, "noise": False},
+                "detail": {"kind": case.get("kind"), "tp": 0, "fp": 0, "fn": 99, "prov_ok": 0, "prov_total": 0, "noise": False},
             })
     return results

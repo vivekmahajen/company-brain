@@ -63,6 +63,30 @@ def single_run_metrics(results: list[dict]) -> dict:
     return m
 
 
+def extraction_by_kind(results: list[dict]) -> dict:
+    """Per-source-kind extraction F1 + noise rejection (so a regression in one
+    source type is visible, not averaged away)."""
+    ext = [r for r in results if r["stage"] == "extraction"]
+    kinds = sorted({r["detail"].get("kind") for r in ext if r["detail"].get("kind")})
+    out = {}
+    for k in kinds:
+        rows = [r for r in ext if r["detail"].get("kind") == k]
+        know = [r for r in rows if not r["detail"].get("noise")]
+        noise = [r for r in rows if r["detail"].get("noise")]
+        tp = sum(r["detail"].get("tp", 0) for r in know)
+        fp = sum(r["detail"].get("fp", 0) for r in know)
+        fn = sum(r["detail"].get("fn", 0) for r in know)
+        prec = _f(tp, tp + fp)
+        rec = _f(tp, tp + fn)
+        f1 = round(_f(2 * prec * rec, prec + rec), 3) if know else None
+        out[k] = {
+            "f1": f1,
+            "noise_rejection": round(_f(sum(1 for r in noise if r["passed"]), len(noise)), 3) if noise else None,
+            "cases": len(rows),
+        }
+    return out
+
+
 def _ece(routing_results: list[dict], bins: int = 5) -> float:
     pts = [(r["detail"].get("confidence", 0.0), 1 if r["passed"] else 0) for r in routing_results]
     if not pts:

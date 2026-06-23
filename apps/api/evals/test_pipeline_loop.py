@@ -7,9 +7,12 @@ from apps.api.services.ingest import sync_default_sources
 
 def test_artifacts_landed(seeded, db, org_id):
     arts = db.scalars(select(Artifact).where(Artifact.org_id == org_id)).all()
-    # 3 slack + 2 refund notion + 1 pricing notion + 1 incident notion
-    assert len(arts) == 7
+    # Slack + Notion + GitHub + Linear + transcripts + Gmail + Postgres + Zendesk.
+    assert len(arts) >= 15
     assert all(a.content_hash for a in arts)
+    # provenance spans many connector kinds now
+    kinds = {a.kind for a in arts}
+    assert {"github_doc", "email", "transcript", "db_row", "zendesk_ticket"} <= kinds
 
 
 def test_no_orphan_knowledge_units(seeded, db, org_id):

@@ -53,17 +53,22 @@ def admin_reseed_serving(db: Session = Depends(get_session)):
 
 @router.get("/sources")
 def sources(db: Session = Depends(get_session)):
+    from apps.api.models.tables import Artifact
+
     rows = db.scalars(select(Source).where(Source.org_id == _org())).all()
-    return [
-        {
+    out = []
+    for s in rows:
+        count = len(db.scalars(select(Artifact).where(Artifact.org_id == _org(), Artifact.source_id == s.id)).all())
+        out.append({
             "id": s.id,
             "kind": s.kind,
             "name": s.name,
             "status": s.status,
             "last_synced_at": s.last_synced_at.isoformat() if s.last_synced_at else None,
-        }
-        for s in rows
-    ]
+            "artifact_count": count,
+            "acl_groups": (s.config_jsonb or {}).get("acl_groups", []),
+        })
+    return out
 
 
 @router.get("/artifacts")

@@ -82,6 +82,13 @@ SEED_PRINCIPALS = [
         "scopes": ["invoke:*"],
         "token": "agent-sales-token",
     },
+    {
+        "kind": "agent",
+        "display_name": "Eng agent (eng-team)",
+        "role": "agent",
+        "scopes": ["invoke:*"],
+        "token": "agent-eng-token",
+    },
 ]
 
 

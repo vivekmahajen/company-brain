@@ -92,6 +92,23 @@ against current ACLs (revocation is immediate), fail-closed, with hidden ==
 **PER** on the CBE scorecard; the console **Access** page has a "view as"
 simulator and an access audit log.
 
+## Connectors (sources)
+
+Eight connectors behind one ABC, each fixture-first (offline/deterministic for
+`make eval`) with a live-mode seam, incremental + idempotent, and **ACL-mirrored**:
+**Slack, Notion, GitHub, Linear, Gmail, Postgres, Transcripts, Zendesk**. The
+skills compile from real source types with cross-source provenance:
+
+- `respond-to-incident` ← GitHub (postmortem + incident issue) + Linear (ticket)
+  + a transcript (on-call retro) + Notion runbook.
+- `handle-pricing-exception` ← Gmail (deal-desk thread) + a sales-call transcript
+  + Postgres (pricing tiers) + Notion.
+- `handle-refund` ← Slack + Notion + Zendesk.
+
+The **Postgres reader** is read-only by construction and also backs the
+executor's live refund-gate facts (INV-2). Every source kind has extraction-eval
+coverage (per-kind F1 + noise rejection on the scorecard).
+
 ## Adding policies, knowledge, and capabilities
 
 Three ways to extend the Brain, all live (no redeploy needed for the first two):

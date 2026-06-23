@@ -18,8 +18,22 @@ export default async function SourcesPage() {
         {sources.map((s) => (
           <div key={s.id} className="rounded-lg border border-neutral-800 p-4">
             <div className="font-medium">{s.name}</div>
-            <div className="text-sm text-neutral-400">{s.kind} · {s.status}</div>
+            <div className="text-sm text-neutral-400">
+              {s.kind} · {s.status} · {s.artifact_count ?? 0} artifacts
+            </div>
             <div className="text-xs text-neutral-500">last sync: {s.last_synced_at || "—"}</div>
+            <div className="mt-1 text-xs">
+              <span className="text-neutral-500">visible to: </span>
+              {s.acl_groups?.length ? (
+                s.acl_groups.map((g: string) => (
+                  <span key={g} className="mr-1 rounded bg-neutral-800 px-1.5 py-0.5 text-neutral-300">
+                    {g}
+                  </span>
+                ))
+              ) : (
+                <span className="text-amber-300">default-deny</span>
+              )}
+            </div>
           </div>
         ))}
       </div>

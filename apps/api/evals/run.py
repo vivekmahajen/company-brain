@@ -81,6 +81,7 @@ def run_suite(split: str = "test", n: int = 5):
         per_run_metrics.append(scoring.single_run_metrics(results))
 
     metrics = scoring.aggregate(per_run_metrics)
+    by_kind = scoring.extraction_by_kind(all_results)
     judge = cohens_kappa()
     contam = contamination_check()
     cost = _latency(db, split)
@@ -116,6 +117,7 @@ def run_suite(split: str = "test", n: int = 5):
     }
     scorecard = sc_mod.build_scorecard(attribution=attribution, metrics=metrics, counts=counts(),
                                        judge=judge, contamination=contam, cost=cost, gates=gates)
+    scorecard["extraction_by_kind"] = by_kind
     db.close()
     return scorecard, all_results
 

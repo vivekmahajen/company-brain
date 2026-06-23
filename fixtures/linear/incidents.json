@@ -1,0 +1,16 @@
+{
+  "team": "core",
+  "issues": [
+    {
+      "id": "INC-1",
+      "title": "Sev1 incident: checkout outage",
+      "description": "Severity Sev1, customer-facing. Never downgrade incident severity without incident commander sign-off.",
+      "author": "sre@acme.com",
+      "updated_at": "2026-02-12T09:15:00Z",
+      "state": "started",
+      "priority": 1,
+      "labels": ["incident", "sev1"],
+      "comments": []
+    }
+  ]
+}

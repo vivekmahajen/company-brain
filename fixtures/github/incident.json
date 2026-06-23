@@ -1,0 +1,30 @@
+{
+  "repo": "acme/platform",
+  "private": true,
+  "issues": [
+    {
+      "number": 42,
+      "title": "Sev1: checkout API returning 500s",
+      "body": "Checkout is down for all users. Investigating now.",
+      "author": "sre@acme.com",
+      "updated_at": "2026-02-12T09:00:00Z",
+      "comments": [
+        {
+          "id": "ghc-1",
+          "body": "Never deploy code during an active Sev1 incident.",
+          "author": "ic@acme.com",
+          "updated_at": "2026-02-12T09:30:00Z"
+        }
+      ]
+    }
+  ],
+  "docs": [
+    {
+      "path": "runbooks/postmortem-2026-02-12.md",
+      "title": "Postmortem: checkout Sev1 outage",
+      "content": "Root cause: a bad database migration ran during peak traffic.\nNever roll out schema changes during an active incident without a backout plan.",
+      "author": "sre@acme.com",
+      "updated_at": "2026-02-13T10:00:00Z"
+    }
+  ]
+}

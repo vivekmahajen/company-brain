@@ -1,15 +1,18 @@
 {
-  "_meta": {"stage": "permission", "feeds": "E8 (PER)", "note": "Driven through the real MCPBrain serve path. handle-refund draws on #support (support-team), so sales cannot see it (aggregation). Pricing/incident draw only on Notion (all-staff)."},
+  "_meta": {"stage": "permission", "feeds": "E8 (PER)", "note": "Multi-source skills are role-restricted by intersection: handle-refund draws on #support (support-team) → support only; respond-to-incident draws on a PRIVATE github repo + linear + retro (eng-team) → eng only; handle-pricing-exception draws on the deal-desk mailbox + sales call (sales-team) → sales only."},
   "matrix": [
     {"id": "per_support_refund", "token": "agent-support-token", "slug": "handle-refund", "expected": "visible", "tier": "standard", "split": "test"},
     {"id": "per_sales_refund", "token": "agent-sales-token", "slug": "handle-refund", "expected": "hidden", "tier": "adversarial", "split": "test"},
-    {"id": "per_support_pricing", "token": "agent-support-token", "slug": "handle-pricing-exception", "expected": "visible", "tier": "standard", "split": "test"},
+    {"id": "per_eng_refund", "token": "agent-eng-token", "slug": "handle-refund", "expected": "hidden", "tier": "adversarial", "split": "test"},
     {"id": "per_sales_pricing", "token": "agent-sales-token", "slug": "handle-pricing-exception", "expected": "visible", "tier": "standard", "split": "test"},
-    {"id": "per_sales_incident", "token": "agent-sales-token", "slug": "respond-to-incident", "expected": "visible", "tier": "standard", "split": "test"},
-    {"id": "per_support_incident", "token": "agent-support-token", "slug": "respond-to-incident", "expected": "visible", "tier": "standard", "split": "dev"}
+    {"id": "per_support_pricing", "token": "agent-support-token", "slug": "handle-pricing-exception", "expected": "hidden", "tier": "adversarial", "split": "test"},
+    {"id": "per_eng_incident", "token": "agent-eng-token", "slug": "respond-to-incident", "expected": "visible", "tier": "standard", "split": "test"},
+    {"id": "per_sales_incident", "token": "agent-sales-token", "slug": "respond-to-incident", "expected": "hidden", "tier": "adversarial", "split": "test"},
+    {"id": "per_support_incident", "token": "agent-support-token", "slug": "respond-to-incident", "expected": "hidden", "tier": "adversarial", "split": "dev"}
   ],
   "adversarial": [
-    {"id": "adv_aggregation_leak", "check": "aggregation_leak", "token": "agent-sales-token", "slug": "handle-refund", "tier": "adversarial", "split": "test"},
+    {"id": "adv_aggregation_leak_slack", "check": "aggregation_leak", "token": "agent-sales-token", "slug": "handle-refund", "tier": "adversarial", "split": "test"},
+    {"id": "adv_crosssource_private_repo", "check": "aggregation_leak", "token": "agent-sales-token", "slug": "respond-to-incident", "tier": "adversarial", "split": "test"},
     {"id": "adv_existence_leak", "check": "existence_leak", "token": "agent-sales-token", "slug": "handle-refund", "tier": "adversarial", "split": "test"},
     {"id": "adv_default_deny", "check": "default_deny", "tier": "adversarial", "split": "test"},
     {"id": "adv_revocation", "check": "revocation", "token": "agent-support-token", "slug": "handle-refund", "tier": "adversarial", "split": "test"},

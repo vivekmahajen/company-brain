@@ -46,6 +46,11 @@ def run_full_pipeline(db: Session, org_id: str | None = None) -> dict:
 
     seed_access(db, org_id)
 
+    # Mirror live order facts from the read-only Postgres reader (INV-2 gate facts).
+    from apps.api.execution.facts import mirror_db_facts
+
+    mirror_db_facts(db, org_id)
+
     return {
         "ingest": ingest,
         "extract": extract,

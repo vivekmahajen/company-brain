@@ -15,15 +15,17 @@ from apps.api.models.access import Group, Membership, SourceACL
 from apps.api.models.serving import Principal
 from apps.api.models.tables import Source
 
-GROUPS = ["all-staff", "support-team", "sales-team"]
+GROUPS = ["all-staff", "support-team", "sales-team", "eng-team"]
 
 # token (base) → group names. Default-org tokens are clean; other orgs prefixed.
+# Admin (agent/human) belong to every group; role agents to their domain only.
 TOKEN_GROUPS = {
-    "agent-token": ["support-team", "all-staff", "sales-team"],
+    "agent-token": ["support-team", "all-staff", "sales-team", "eng-team"],
     "agent-readonly-token": ["support-team", "all-staff"],
-    "human-token": ["support-team", "all-staff", "sales-team"],
+    "human-token": ["support-team", "all-staff", "sales-team", "eng-team"],
     "agent-support-token": ["support-team", "all-staff"],
     "agent-sales-token": ["sales-team", "all-staff"],
+    "agent-eng-token": ["eng-team", "all-staff"],
 }
 
 
