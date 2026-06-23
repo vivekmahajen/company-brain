@@ -1,0 +1,18 @@
+{
+  "//": "Connect Claude Desktop (or any stdio MCP client) to the REMOTE Company",
+  "//2": "Brain server over Streamable HTTP, via the mcp-remote bridge.",
+  "//requires": "Node.js installed (for npx). Keep the trailing slash on /mcp/.",
+  "//token": "agent-token = invoke; agent-readonly-token = no refunds; human-token = can approve.",
+  "mcpServers": {
+    "company-brain": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://company-brain-production-e41b.up.railway.app/mcp/",
+        "--header",
+        "Authorization: Bearer agent-token"
+      ]
+    }
+  }
+}
