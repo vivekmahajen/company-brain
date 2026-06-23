@@ -21,12 +21,12 @@ tools:
 guardrails:
   - Never offer a discount above 40% without VP approval.
 provenance:
-  - ku: 75f4315a  source: notion/Pricing Exception Policy 2026-02-01  span: "Discounts up to 15% are automatically approved."
-  - ku: f74cedf7  source: notion/Pricing Exception Policy 2026-02-01  span: "Discounts above 20% require manager sign-off."
-  - ku: 85337789  source: notion/Pricing Exception Policy 2026-02-01  span: "Never offer a discount above 40% without VP approval."
-  - ku: 19674cd1  source: notion/Pricing Exception Policy 2026-02-01  span: "1. Look up the account by account_id."
-  - ku: 28212473  source: notion/Pricing Exception Policy 2026-02-01  span: "2. Verify the requested discount_percent."
-  - ku: d7948e6b  source: notion/Pricing Exception Policy 2026-02-01  span: "3. If eligible, apply the discount and update the CRM."
+  - ku: 79e6dc56  source: notion/Pricing Exception Policy 2026-02-01  span: "Discounts up to 15% are automatically approved."
+  - ku: caa7368e  source: notion/Pricing Exception Policy 2026-02-01  span: "Discounts above 20% require manager sign-off."
+  - ku: 74032beb  source: notion/Pricing Exception Policy 2026-02-01  span: "Never offer a discount above 40% without VP approval."
+  - ku: 8750ee0f  source: notion/Pricing Exception Policy 2026-02-01  span: "1. Look up the account by account_id."
+  - ku: 23b18522  source: notion/Pricing Exception Policy 2026-02-01  span: "2. Verify the requested discount_percent."
+  - ku: 6db358d8  source: notion/Pricing Exception Policy 2026-02-01  span: "3. If eligible, apply the discount and update the CRM."
 ---
 
 ## When to use

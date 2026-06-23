@@ -82,46 +82,28 @@ def execute_tool(
     *,
     agent_id: str = "agent",
     org_id: str | None = None,
+    idempotency_key: str | None = None,
 ) -> dict:
+    """REST/console execution. Routes through the ONE GovernedExecutor (INV-1)
+    using the seeded default agent principal."""
+    import uuid
+
+    from apps.api.auth.principals import resolve_principal
+    from apps.api.execution.executor import GovernedExecutor
+
     org_id = org_id or get_settings().default_org_id
-    skill = _latest_skill(db, org_id, slug)
-    if not skill:
-        return {"outcome": "error", "error": f"skill '{slug}' not found"}
-    binding = db.scalar(
-        select(SkillBinding).where(SkillBinding.skill_id == skill.id, SkillBinding.tool_name == tool_name)
+    args = dict(inputs)
+    key = idempotency_key or args.pop("idempotency_key", None) or f"rest-{uuid.uuid4()}"
+
+    principal = resolve_principal(db, "agent-token")
+    if not principal or principal.org_id != org_id:
+        return {"status": "error", "detail": "no agent principal seeded for this org"}
+
+    return GovernedExecutor(db).invoke(
+        principal=principal,
+        skill_slug=slug,
+        tool_name=tool_name,
+        args=args,
+        idempotency_key=key,
+        transport="rest",
     )
-    if not binding:
-        return {"outcome": "error", "error": f"tool '{tool_name}' not bound to skill '{slug}'"}
-
-    # 1) binding-level approval gate
-    needs_binding_approval = binding.approval_required and eval_expression(binding.approval_expression, inputs)
-    # 2) org policy check (M8)
-    policy = check_policies(db, org_id, tool_name, inputs)
-
-    expected = "approval_required" if (needs_binding_approval or not policy["allowed"]) else "executed"
-
-    if needs_binding_approval or not policy["allowed"]:
-        result = {
-            "outcome": "approval_required",
-            "tool": tool_name,
-            "reason": policy["reason"] if not policy["allowed"] else f"binding gate: {binding.approval_expression}",
-            "policy_rule": policy["rule"],
-            "summary_for_manager": {"slug": slug, "tool": tool_name, "inputs": inputs},
-        }
-    else:
-        result = {"outcome": "executed", "tool": tool_name, "result": _simulate_tool(tool_name, inputs)}
-
-    db.add(
-        ExecutionLog(
-            org_id=org_id,
-            skill_id=skill.id,
-            agent_id=agent_id,
-            input_jsonb={"tool": tool_name, **inputs},
-            output_jsonb=result,
-            outcome=result["outcome"],
-            expected_jsonb={"decision": expected},
-            drift_flag=(result["outcome"] != expected),
-        )
-    )
-    db.commit()
-    return result

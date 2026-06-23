@@ -1,75 +1,62 @@
-"""M7 — MCP server: how AI agents consume and execute skills.
+"""Low-level MCP Server (§3, §11).
 
-Exposes:
-  - resolve(task)        -> ranked skills + why
-  - list_skills()        -> available skills
-  - get_skill(slug)      -> the compiled SKILL.md + bound tools + provenance
-  - execute(slug, tool, inputs) -> runs a bound tool with inline governance;
-                           side-effecting tools return APPROVAL_REQUIRED instead
-                           of acting when an approval gate / policy matches.
-
-Run:  python -m apps.api.mcp.server   (stdio transport)
-The same logic is mirrored over REST in routers/brain.py.
+The tool list is DYNAMIC — computed per-caller from approved skills in Postgres —
+and every call dispatches through the one GovernedExecutor via MCPBrain. We use
+the low-level `Server` (not FastMCP) precisely because of these two needs.
 """
 from __future__ import annotations
 
 import json
 
-from apps.api.config import get_settings
-from apps.api.models.db import SessionLocal, init_db
-from apps.api.services.execution import execute_tool, get_skill, list_skills, resolve_task
+import mcp.types as types
+from mcp.server.lowlevel import Server
 
-try:
-    from mcp.server.fastmcp import FastMCP
-
-    _HAVE_MCP = True
-except Exception:  # pragma: no cover - mcp optional at import time
-    _HAVE_MCP = False
+from apps.api.mcp.brain import AuthError, MCPBrain
+from apps.api.mcp.context import current_credential
 
 
-def _org() -> str:
-    return get_settings().default_org_id
+def build_server() -> Server:
+    server = Server("company-brain")
 
+    @server.list_tools()
+    async def list_tools() -> list[types.Tool]:
+        brain = MCPBrain(current_credential.get(), transport="mcp")
+        try:
+            descriptors = brain.list_tools()
+        except AuthError:
+            return []
+        return [
+            types.Tool(name=d["name"], description=d["description"], inputSchema=d["input_schema"])
+            for d in descriptors
+        ]
 
-def build_server():
-    if not _HAVE_MCP:
-        raise RuntimeError("The `mcp` package is not installed. `pip install mcp`. ")
-    mcp = FastMCP("company-brain")
+    @server.call_tool()
+    async def call_tool(name: str, arguments: dict) -> list[types.ContentBlock]:
+        brain = MCPBrain(current_credential.get(), transport="mcp")
+        try:
+            result = brain.call_tool(name, arguments or {})
+        except AuthError as e:
+            result = {"status": "denied", "reason": "unauthorized", "detail": str(e)}
+        return [types.TextContent(type="text", text=json.dumps(result, default=str))]
 
-    @mcp.tool()
-    def resolve(task: str) -> str:
-        """Route a natural-language task to the correct company skill(s)."""
-        with SessionLocal() as db:
-            return json.dumps(resolve_task(db, task, _org()), default=str)
+    # Expose each approved skill as a resource at skill://<slug>.
+    @server.list_resources()
+    async def list_resources() -> list[types.Resource]:
+        brain = MCPBrain(current_credential.get(), transport="mcp")
+        try:
+            skills = brain.call_tool("list_skills", {}).get("skills", [])
+        except AuthError:
+            return []
+        return [
+            types.Resource(uri=f"skill://{s['slug']}", name=s["title"], mimeType="text/markdown")
+            for s in skills
+        ]
 
-    @mcp.tool()
-    def brain_list_skills() -> str:
-        """List the skills the company brain can execute."""
-        with SessionLocal() as db:
-            return json.dumps(list_skills(db, _org()), default=str)
+    @server.read_resource()
+    async def read_resource(uri: str) -> str:
+        slug = str(uri).replace("skill://", "")
+        brain = MCPBrain(current_credential.get(), transport="mcp")
+        skill = brain.call_tool("get_skill", {"slug": slug})
+        return skill.get("skill_md", json.dumps(skill))
 
-    @mcp.tool()
-    def get_skill_md(slug: str) -> str:
-        """Return the compiled SKILL.md, bound tools, and provenance for a slug."""
-        with SessionLocal() as db:
-            return json.dumps(get_skill(db, slug, _org()), default=str)
-
-    @mcp.tool()
-    def execute(slug: str, tool: str, inputs: dict, agent_id: str = "mcp-agent") -> str:
-        """Execute a bound tool of a skill. Side-effecting tools honor approval gates."""
-        with SessionLocal() as db:
-            return json.dumps(
-                execute_tool(db, slug, tool, inputs, agent_id=agent_id, org_id=_org()), default=str
-            )
-
-    return mcp
-
-
-def main() -> None:
-    init_db()
-    server = build_server()
-    server.run()  # stdio by default
-
-
-if __name__ == "__main__":
-    main()
+    return server

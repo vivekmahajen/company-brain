@@ -21,7 +21,10 @@ def main() -> None:
         print("COMPANY BRAIN — Phase 1 demo (refund workflow)")
         print("=" * 70)
 
+        from apps.api.services.serving import approve_demo_skills
+
         report = run_full_pipeline(db, org)
+        approve_demo_skills(db, org)  # make skills servable over MCP
         print("\n[1] PIPELINE REPORT")
         print(json.dumps(report, indent=2, default=str))
 
@@ -33,11 +36,11 @@ def main() -> None:
         skill = get_skill(db, "handle-refund", org)
         print(skill["body_md"] if skill else "  (none)")
 
-        print("\n[4] EXECUTION GATING")
-        small = execute_tool(db, "handle-refund", "stripe_refund", {"order_id": "A1", "amount": 120}, org_id=org)
-        big = execute_tool(db, "handle-refund", "stripe_refund", {"order_id": "A2", "amount": 620}, org_id=org)
-        print("  $120 refund ->", small["outcome"])
-        print("  $620 refund ->", big["outcome"], "| reason:", big.get("reason"))
+        print("\n[4] GOVERNED EXECUTION (server-side facts + approval gate)")
+        small = execute_tool(db, "handle-refund", "stripe_refund", {"order_id": "55", "amount": 200}, org_id=org)
+        big = execute_tool(db, "handle-refund", "stripe_refund", {"order_id": "1234", "amount": 620}, org_id=org)
+        print("  order #55  ($200, 12d) ->", small["status"])
+        print("  order #1234 ($620, 40d) ->", big["status"], "| gate:", big.get("gate_reason"))
         print("\nDONE.")
     finally:
         db.close()

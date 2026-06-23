@@ -84,6 +84,37 @@ def init_db() -> None:
         with engine.begin() as conn:
             conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
     # Import models so they register on Base.metadata before create_all.
-    from apps.api.models import tables  # noqa: F401
+    from apps.api.models import serving, tables  # noqa: F401
 
     Base.metadata.create_all(engine)
+    _ensure_added_columns()
+
+
+# Columns added after the initial schema. create_all() only creates missing
+# *tables*, never alters existing ones, so additive columns are applied here so
+# already-deployed databases pick them up without a manual migration.
+_ADDED_COLUMNS = {
+    "execution_log": {
+        "principal_id": "VARCHAR",
+        "idempotency_key": "VARCHAR",
+        "gate_decision": "VARCHAR",
+        "approval_request_id": "VARCHAR",
+        "transport": "VARCHAR",
+        "trace_id": "VARCHAR",
+    },
+}
+
+
+def _ensure_added_columns() -> None:
+    from sqlalchemy import inspect, text
+
+    insp = inspect(engine)
+    existing_tables = set(insp.get_table_names())
+    with engine.begin() as conn:
+        for table, cols in _ADDED_COLUMNS.items():
+            if table not in existing_tables:
+                continue
+            have = {c["name"] for c in insp.get_columns(table)}
+            for col, sqltype in cols.items():
+                if col not in have:
+                    conn.execute(text(f'ALTER TABLE {table} ADD COLUMN {col} {sqltype}'))

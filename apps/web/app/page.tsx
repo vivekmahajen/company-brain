@@ -61,7 +61,9 @@ export default function Dashboard() {
 
   async function dryRunExecute() {
     if (!skill) return;
-    const res = await api.execute(skill.slug, "stripe_refund", { order_id: "demo-1", amount });
+    // order #1234 is $620 server-side, #55 is $200 — gate uses server facts.
+    const order_id = amount > 500 ? "1234" : "55";
+    const res = await api.execute(skill.slug, "stripe_refund", { order_id, amount });
     setDryRun(res);
   }
 
@@ -156,11 +158,20 @@ export default function Dashboard() {
             {dryRun && (
               <div
                 className={`mt-2 rounded p-2 text-sm ${
-                  dryRun.outcome === "approval_required" ? "bg-amber-900/40 text-amber-200" : "bg-emerald-900/40 text-emerald-200"
+                  dryRun.status === "executed"
+                    ? "bg-emerald-900/40 text-emerald-200"
+                    : "bg-amber-900/40 text-amber-200"
                 }`}
               >
-                <b>{dryRun.outcome}</b>
-                {dryRun.reason ? ` — ${dryRun.reason}` : ""}
+                <b>{dryRun.status}</b>
+                {dryRun.gate_reason ? ` — gate: ${dryRun.gate_reason}` : ""}
+                {dryRun.detail ? ` — ${dryRun.detail}` : ""}
+                {dryRun.status === "approval_required" && (
+                  <div className="mt-1 text-xs">
+                    Held as approval <code>{dryRun.approval_id?.slice(0, 8)}</code> — approve it in the
+                    Review queue.
+                  </div>
+                )}
               </div>
             )}
           </div>

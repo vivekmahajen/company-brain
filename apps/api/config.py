@@ -45,6 +45,11 @@ class Settings(BaseSettings):
     use_pgvector: bool = Field(default=False)
     # Seed the refund demo (run the full pipeline) on startup if the DB is empty.
     seed_on_startup: bool = Field(default=False)
+    # Action adapters: "sandbox" simulates side effects; "live" hits real
+    # providers (gated; never default).
+    actions_mode: str = Field(default="sandbox")
+    # Minutes a pending approval stays valid before expiring.
+    approval_ttl_minutes: int = Field(default=1440)
 
     # --- Tenancy ----------------------------------------------------------
     default_org_id: str = Field(default="00000000-0000-0000-0000-000000000001")

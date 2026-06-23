@@ -7,18 +7,19 @@ from apps.api.services.execution import execute_tool
 
 
 def test_small_refund_executes(seeded, db, org_id):
-    res = execute_tool(db, "handle-refund", "stripe_refund", {"order_id": "A1", "amount": 120}, org_id=org_id)
-    assert res["outcome"] == "executed"
+    res = execute_tool(db, "handle-refund", "stripe_refund", {"order_id": "55", "amount": 200}, org_id=org_id)
+    assert res["status"] == "executed"
 
 
 def test_large_refund_requires_approval(seeded, db, org_id):
-    res = execute_tool(db, "handle-refund", "stripe_refund", {"order_id": "A2", "amount": 620}, org_id=org_id)
-    assert res["outcome"] == "approval_required"
-    assert res["policy_rule"] == "refund_high_value"
+    res = execute_tool(db, "handle-refund", "stripe_refund", {"order_id": "1234", "amount": 620}, org_id=org_id)
+    assert res["status"] == "approval_required"
+    assert "approval_id" in res
+    assert "500" in res["gate_reason"] or "refund_high_value" in res["gate_reason"]
 
 
 def test_execution_is_logged(seeded, db, org_id):
-    execute_tool(db, "handle-refund", "update_support_ticket", {"order_id": "A3"}, org_id=org_id)
+    execute_tool(db, "handle-refund", "update_support_ticket", {"order_id": "55", "note": "x"}, org_id=org_id)
     logs = db.scalars(select(ExecutionLog).where(ExecutionLog.org_id == org_id)).all()
     assert logs, "executions must be logged"
 

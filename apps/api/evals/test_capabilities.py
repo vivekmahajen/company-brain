@@ -28,8 +28,8 @@ def test_pricing_approval_gate(seeded, db, org_id):
 
     big = execute_tool(db, "handle-pricing-exception", "apply_discount", {"account_id": "a", "discount_percent": 30}, org_id=org_id)
     small = execute_tool(db, "handle-pricing-exception", "apply_discount", {"account_id": "a", "discount_percent": 10}, org_id=org_id)
-    assert big["outcome"] == "approval_required"
-    assert small["outcome"] == "executed"
+    assert big["status"] == "approval_required"
+    assert small["status"] == "executed"
 
 
 def test_incident_skill_is_executable(seeded, db, org_id):

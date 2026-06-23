@@ -1,59 +1,70 @@
-# Consuming the Brain from an AI agent (MCP)
+# Consuming the Brain from an AI agent (governed MCP server)
 
-The Brain exposes skills to agents over MCP (stdio) and a REST mirror.
+The Brain exposes skills to agents over a first-party **MCP server** with
+server-side governance: a single `GovernedExecutor` is the only path to a side
+effect, and approval-gated tools are held until a human approves.
 
-## MCP
+## Transports
 
-Run the server:
+- **stdio** (local agents — Claude Desktop, Cursor):
+  ```bash
+  BRAIN_MCP_TOKEN=agent-token python -m apps.api.mcp.stdio
+  ```
+  See `infra/claude_desktop_config.sample.json`.
+- **Streamable HTTP** (remote): mounted into the FastAPI app at `/mcp`; deploys
+  on Railway with the REST API. Clients send `Authorization: Bearer <token>`.
 
-```bash
-python -m apps.api.mcp.server
-```
+## Identity
 
-Register it with an MCP client (e.g. Claude Desktop / Claude Code). Example
-client config:
+A credential maps to a `principal` (org + role + scopes). Seeded demo tokens:
 
-```json
-{
-  "mcpServers": {
-    "company-brain": {
-      "command": "python",
-      "args": ["-m", "apps.api.mcp.server"],
-      "cwd": "/path/to/company-brain"
-    }
-  }
-}
-```
+| token | role | scopes |
+|---|---|---|
+| `agent-token` | agent | `invoke:*` |
+| `agent-readonly-token` | agent | `invoke:update_support_ticket` only |
+| `human-token` | approver | `approve:*`, `invoke:*` |
 
-Tools exposed:
+## Tools
 
 | Tool | Purpose |
 |---|---|
-| `resolve(task)` | Route a natural-language task to the right skill(s) + why |
-| `brain_list_skills()` | List executable skills |
-| `get_skill_md(slug)` | Fetch the compiled SKILL.md + bound tools + provenance |
-| `execute(slug, tool, inputs)` | Run a bound tool; side-effecting tools honor approval gates |
+| `resolve(task)` | Route a task to the right skill(s) + why (visible skills only) |
+| `list_skills()` | Approved skills visible to the caller |
+| `get_skill(slug)` | Compiled SKILL.md + bindings + inputs + provenance |
+| `get_approval(approval_id)` | Poll a held action's status/result |
+| `invoke_skill_tool(skill_slug, tool_name, args, idempotency_key, approval_id?)` | The single governed entry point |
+| `<slug>__<tool>` | Per-skill native wrappers (e.g. `handle-refund__stripe_refund`) — thin callers of `invoke_skill_tool` |
 
-### Approval gating (governance enforced inline)
+Each approved skill is also an MCP **resource** at `skill://<slug>`.
+
+## The two refund paths
 
 ```
-execute("handle-refund", "stripe_refund", {"order_id": "o1", "amount": 620})
-  -> {"outcome": "approval_required", "reason": "policy 'refund_high_value' ...", ...}
+# under threshold -> executes (sandbox)
+handle-refund__stripe_refund {order_id:"55", amount:200, idempotency_key:"a1"}
+  -> {status:"executed", result:{refund_id:"re_sandbox_…"}}
 
-execute("handle-refund", "stripe_refund", {"order_id": "o2", "amount": 50})
-  -> {"outcome": "executed", "result": {...}}
+# over threshold -> held, NO side effect
+handle-refund__stripe_refund {order_id:"1234", amount:620, idempotency_key:"b1"}
+  -> {status:"approval_required", approval_id:"…", gate_reason:"amount 620 > 500"}
+
+# a human with approve:stripe_refund approves in the console (or POST
+# /api/approvals/{id}/decide). The server executes the held action.
+get_approval {approval_id:"…"}  -> {status:"executed", result:{…}}
 ```
 
-A `>$500` refund returns approval-required instead of acting; every call is
-written to `execution_log` for closed-loop drift detection (M9).
+## Safety invariants (enforced server-side)
+
+- **Single choke point** — every side effect routes through `GovernedExecutor.invoke`.
+- **Server-side gate facts** — the gate reads the order's true charge/age, not the agent's claim.
+- **No execution before approval** — gated side effects are held, not run.
+- **Separation of duties** — the requester cannot approve their own request.
+- **Idempotency** — repeating an `idempotency_key` replays the stored result; no double-refund.
+- **Least visibility** — `resolve`/`get_skill`/`tools/list` show only the caller's approved skills.
+
+Run the acceptance suite: `python scripts/mcp_smoke.py` (sandbox, no keys).
 
 ## REST mirror
 
-Same surface for non-MCP clients (see `apps/api/routers/brain.py`):
-
-```
-POST /api/resolve            {"task": "..."}
-GET  /api/skills
-GET  /api/skills/{slug}
-POST /api/execute            {"slug","tool","inputs"}
-```
+The same governed path backs `POST /api/execute`; approvals are managed at
+`GET /api/approvals` and `POST /api/approvals/{id}/decide`.

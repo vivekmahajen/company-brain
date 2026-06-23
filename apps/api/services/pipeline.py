@@ -36,6 +36,11 @@ def run_full_pipeline(db: Session, org_id: str | None = None) -> dict:
     staleness = detect_supersession_staleness(db, org_id)
     unroutable = lint_resolver(db, org_id)
 
+    # Serving layer: principals + server-side order facts + approve demo skills.
+    from apps.api.services.serving import seed_serving
+
+    seed_serving(db, org_id)
+
     return {
         "ingest": ingest,
         "extract": extract,

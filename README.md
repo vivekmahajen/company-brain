@@ -59,6 +59,25 @@ export LLM_PROVIDER=anthropic
 export ANTHROPIC_API_KEY=sk-ant-...
 ```
 
+## Governed MCP serving layer (agents execute skills)
+
+A first-party **MCP server** lets external agents resolve and *execute* skills
+with approval gates enforced server-side. One `GovernedExecutor` is the only path
+to a side effect (no bypass), gate decisions use server-resolved facts (not the
+agent's claims), gated side effects are held for human approval, idempotency keys
+prevent double-refunds, and a requester can't approve its own request.
+
+```bash
+# local agents (stdio):
+BRAIN_MCP_TOKEN=agent-token python -m apps.api.mcp.stdio
+# remote: Streamable HTTP mounted at /mcp on the FastAPI app
+# acceptance suite (sandbox, no keys):
+python scripts/mcp_smoke.py
+```
+
+Full agent guide + the two refund paths: **[docs/AGENTS.md](docs/AGENTS.md)**.
+Pending approvals surface in the console **Review queue**.
+
 ## Adding policies, knowledge, and capabilities
 
 Three ways to extend the Brain, all live (no redeploy needed for the first two):

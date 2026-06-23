@@ -16,9 +16,13 @@ jobs:
       - name: Install (test subset)
         run: |
           python -m pip install --upgrade pip
-          pip install "SQLAlchemy==2.0.36" "pydantic==2.10.4" "pydantic-settings==2.7.1" "pytest==8.3.4"
-      - name: Run eval harness (extraction precision/recall, routing accuracy, governance, determinism)
+          pip install "SQLAlchemy==2.0.36" "pydantic==2.10.4" "pydantic-settings==2.7.1" "pytest==8.3.4" "mcp>=1.12,<2"
+      - name: Run eval harness (extraction, routing, governance, determinism, MCP serving)
         run: python -m pytest -q
+
+      # MCP serving smoke test (§11/§12): resolve + governed execution + approval gate.
+      - name: MCP smoke test (sandbox)
+        run: python scripts/mcp_smoke.py
 
       # Hard rule (M5): a compile that leaves a skill unroutable fails CI.
       - name: Resolver lint — no dark capabilities

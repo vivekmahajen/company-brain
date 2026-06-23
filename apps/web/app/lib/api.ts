@@ -41,6 +41,11 @@ export const api = {
   // Add knowledge (paste text -> extract -> recompile)
   addKnowledge: (text: string, source_name = "Manual entry") =>
     req("/knowledge/add", { method: "POST", body: JSON.stringify({ text, source_name }) }),
+
+  // MCP serving: approvals (held side effects)
+  approvals: () => req("/approvals"),
+  decideApproval: (id: string, decision: "approve" | "reject") =>
+    req(`/approvals/${id}/decide`, { method: "POST", body: JSON.stringify({ decision }) }),
 };
 
 export type Route = { slug: string; title: string; score: number; confidence: number; reason: string };

@@ -26,8 +26,9 @@ def test_skill_has_thresholds_and_bindings(seeded, db, org_id):
     assert "amount > 500" in (tools["stripe_refund"]["approval_expression"] or "")
     # provenance footnotes present
     assert len(skill["provenance"]) >= 2
-    # side-effecting skill is gated for review, never auto-approved
-    assert skill["status"] == "needs_review"
+    # in the seeded org the demo skill has been explicitly approved for serving;
+    # the compile-time needs_review default is asserted in test_compile_gating.
+    assert skill["status"] == "approved"
 
 
 def test_guardrails_present(seeded, db, org_id):

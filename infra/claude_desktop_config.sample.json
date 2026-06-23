@@ -1,0 +1,17 @@
+{
+  "//": "Company Brain MCP server for Claude Desktop / Cursor (stdio transport).",
+  "//cwd": "Set cwd to your local company-brain checkout. BRAIN_MCP_TOKEN selects the principal.",
+  "mcpServers": {
+    "company-brain": {
+      "command": "python",
+      "args": ["-m", "apps.api.mcp.stdio"],
+      "cwd": "/absolute/path/to/company-brain",
+      "env": {
+        "BRAIN_MCP_TOKEN": "agent-token",
+        "DATABASE_URL": "postgresql+psycopg://USER:PASS@HOST:5432/DB",
+        "LLM_PROVIDER": "fixture",
+        "ACTIONS_MODE": "sandbox"
+      }
+    }
+  }
+}

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { api } from "../lib/api";
+import Approvals from "./approvals";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +25,8 @@ export default async function ReviewPage() {
   return (
     <div className="max-w-3xl space-y-6">
       <h1 className="text-2xl font-semibold">Review queue</h1>
+
+      <Approvals />
 
       <Section title={`Skills needing review (${needsReview.length})`}>
         {needsReview.map((s) => (

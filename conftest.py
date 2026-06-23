@@ -25,11 +25,15 @@ def org_id() -> str:
 
 @pytest.fixture(scope="session")
 def seeded(org_id):
-    """Run the full pipeline once; yield a report. Tests share the seeded DB."""
+    """Run the full pipeline once + approve demo skills so the serving layer can
+    expose them. Tests share the seeded DB."""
+    from apps.api.services.serving import approve_demo_skills
+
     init_db()
     db = SessionLocal()
     try:
         report = run_full_pipeline(db, org_id)
+        approve_demo_skills(db, org_id)
     finally:
         db.close()
     return report
