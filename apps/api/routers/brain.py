@@ -38,6 +38,19 @@ def pipeline_run(db: Session = Depends(get_session)):
     return run_full_pipeline(db, _org())
 
 
+@router.post("/admin/reseed-serving")
+def admin_reseed_serving(db: Session = Depends(get_session)):
+    """Make the deployed server MCP-ready: (re)build the brain, seed principals +
+    order facts, and approve the demo skills so they're servable. Idempotent."""
+    from apps.api.services.serving import approve_demo_skills, seed_serving
+
+    org = _org()
+    report = run_full_pipeline(db, org)
+    seed_serving(db, org)
+    approve_demo_skills(db, org)
+    return {"reseeded": True, "org": org, "skills": report.get("skills")}
+
+
 @router.get("/sources")
 def sources(db: Session = Depends(get_session)):
     rows = db.scalars(select(Source).where(Source.org_id == _org())).all()
