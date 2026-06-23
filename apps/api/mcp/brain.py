@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from sqlalchemy import select
 
+from apps.api.access.visibility import VisibilityFilter
 from apps.api.auth.principals import resolve_principal
 from apps.api.execution.executor import GovernedExecutor
 from apps.api.mcp.wrappers import build_skill_tools, visible_approved_skills
@@ -83,8 +84,10 @@ class MCPBrain:
             principal = resolve_principal(db, self.token)
             if not principal:
                 raise AuthError("no valid principal for credential")
+            vf = VisibilityFilter(db, principal)
+            visible = vf.filter_skills(visible_approved_skills(db, principal.org_id))
             tools = [dict(t) for t in CORE_TOOLS]
-            tools += build_skill_tools(db, principal.org_id)
+            tools += build_skill_tools(db, principal.org_id, visible)
             return tools
 
     # -- dispatch -----------------------------------------------------------
@@ -95,9 +98,10 @@ class MCPBrain:
                 raise AuthError("no valid principal for credential")
             org = principal.org_id
             arguments = arguments or {}
+            vf = VisibilityFilter(db, principal)
 
             if name == "resolve":
-                slugs = {s.slug for s in visible_approved_skills(db, org)}
+                slugs = {s.slug for s in vf.filter_skills(visible_approved_skills(db, org))}
                 routes = [r for r in resolve_task(db, arguments["task"], org) if r["slug"] in slugs]
                 return {"routes": routes}
 
@@ -105,12 +109,12 @@ class MCPBrain:
                 return {
                     "skills": [
                         {"slug": s.slug, "title": s.title, "version": s.version, "status": s.status}
-                        for s in visible_approved_skills(db, org)
+                        for s in vf.filter_skills(visible_approved_skills(db, org))
                     ]
                 }
 
             if name == "get_skill":
-                return self._get_skill(db, org, arguments["slug"])
+                return self._get_skill(db, vf, arguments["slug"])
 
             if name == "get_approval":
                 return get_approval(db, org, arguments["approval_id"]) or {"error": "not found"}
@@ -146,14 +150,11 @@ class MCPBrain:
 
             return {"error": f"unknown tool '{name}'"}
 
-    def _get_skill(self, db, org: str, slug: str) -> dict:
-        skill = db.scalars(
-            select(Skill)
-            .where(Skill.org_id == org, Skill.slug == slug, Skill.status == "approved")
-            .order_by(Skill.version.desc())
-        ).first()
+    def _get_skill(self, db, vf: VisibilityFilter, slug: str) -> dict:
+        # VIS-5: hidden and nonexistent are indistinguishable.
+        skill = vf.visible_slug(slug, action="get_skill")
         if not skill:
-            return {"error": "not found or not visible"}
+            return {"error": "not found"}
         bindings = db.scalars(select(SkillBinding).where(SkillBinding.skill_id == skill.id)).all()
         return {
             "slug": skill.slug,
@@ -161,7 +162,7 @@ class MCPBrain:
             "version": skill.version,
             "skill_md": skill.body_md,
             "inputs": skill.frontmatter_jsonb.get("inputs", []),
-            "provenance": skill.frontmatter_jsonb.get("provenance", []),
+            "provenance": vf.filter_provenance(skill),  # VIS-6 per-viewer
             "bindings": [
                 {
                     "tool_name": b.tool_name,

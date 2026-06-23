@@ -30,6 +30,10 @@ class NotionConnector(Connector):
         data = self._load()
         return {"pages": [p["title"] for p in data.get("pages", [])]}
 
+    def pull_acls(self) -> dict:
+        # Workspace-wide pages → all-staff (mirrored native permission).
+        return {"groups": ["all-staff"]}
+
     def pull(self, since: datetime | None = None) -> list[NormalizedArtifact]:
         data = self._load()
         out: list[NormalizedArtifact] = []

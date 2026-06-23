@@ -41,6 +41,11 @@ def run_full_pipeline(db: Session, org_id: str | None = None) -> dict:
 
     seed_serving(db, org_id)
 
+    # Access layer: groups, memberships, mirrored source ACLs (permissions).
+    from apps.api.access.seed import seed_access
+
+    seed_access(db, org_id)
+
     return {
         "ingest": ingest,
         "extract": extract,

@@ -1,0 +1,18 @@
+{
+  "_meta": {"stage": "permission", "feeds": "E8 (PER)", "note": "Driven through the real MCPBrain serve path. handle-refund draws on #support (support-team), so sales cannot see it (aggregation). Pricing/incident draw only on Notion (all-staff)."},
+  "matrix": [
+    {"id": "per_support_refund", "token": "agent-support-token", "slug": "handle-refund", "expected": "visible", "tier": "standard", "split": "test"},
+    {"id": "per_sales_refund", "token": "agent-sales-token", "slug": "handle-refund", "expected": "hidden", "tier": "adversarial", "split": "test"},
+    {"id": "per_support_pricing", "token": "agent-support-token", "slug": "handle-pricing-exception", "expected": "visible", "tier": "standard", "split": "test"},
+    {"id": "per_sales_pricing", "token": "agent-sales-token", "slug": "handle-pricing-exception", "expected": "visible", "tier": "standard", "split": "test"},
+    {"id": "per_sales_incident", "token": "agent-sales-token", "slug": "respond-to-incident", "expected": "visible", "tier": "standard", "split": "test"},
+    {"id": "per_support_incident", "token": "agent-support-token", "slug": "respond-to-incident", "expected": "visible", "tier": "standard", "split": "dev"}
+  ],
+  "adversarial": [
+    {"id": "adv_aggregation_leak", "check": "aggregation_leak", "token": "agent-sales-token", "slug": "handle-refund", "tier": "adversarial", "split": "test"},
+    {"id": "adv_existence_leak", "check": "existence_leak", "token": "agent-sales-token", "slug": "handle-refund", "tier": "adversarial", "split": "test"},
+    {"id": "adv_default_deny", "check": "default_deny", "tier": "adversarial", "split": "test"},
+    {"id": "adv_revocation", "check": "revocation", "token": "agent-support-token", "slug": "handle-refund", "tier": "adversarial", "split": "test"},
+    {"id": "adv_provenance_redaction", "check": "provenance_redaction", "token": "agent-support-token", "slug": "handle-refund", "tier": "adversarial", "split": "test"}
+  ]
+}

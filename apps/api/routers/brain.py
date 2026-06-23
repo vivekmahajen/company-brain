@@ -255,6 +255,66 @@ def evals_failures(run_id: str, db: Session = Depends(get_session)):
     ]
 
 
+# --- access control (permissions) -----------------------------------------
+class ViewAsBody(BaseModel):
+    token: str
+    task: str | None = "a customer wants their money back"
+
+
+@router.post("/access/view-as")
+def access_view_as(body: ViewAsBody, db: Session = Depends(get_session)):
+    """'View as' simulator: what does this principal see across the serve paths?"""
+    from apps.api.mcp.brain import AuthError, MCPBrain
+
+    brain = MCPBrain(body.token, transport="console")
+    try:
+        skills = brain.call_tool("list_skills", {}).get("skills", [])
+        routes = brain.call_tool("resolve", {"task": body.task}).get("routes", []) if body.task else []
+        tools = [t["name"] for t in brain.list_tools()]
+    except AuthError as e:
+        return {"error": f"unknown token / principal: {e}"}
+    return {"token": body.token, "visible_skills": skills, "routes": routes, "tools": tools}
+
+
+@router.get("/access/principals")
+def access_principals(db: Session = Depends(get_session)):
+    """Demo tokens you can 'view as' (tokens are not secrets in sandbox)."""
+    return [
+        {"token": "agent-support-token", "label": "Support agent (support-team, all-staff)"},
+        {"token": "agent-sales-token", "label": "Sales agent (sales-team, all-staff)"},
+        {"token": "agent-token", "label": "Admin agent (all groups)"},
+    ]
+
+
+@router.get("/access/sources")
+def access_sources(db: Session = Depends(get_session)):
+    from apps.api.models.access import Group, SourceACL
+
+    rows = db.scalars(select(Source).where(Source.org_id == _org())).all()
+    out = []
+    for s in rows:
+        acls = db.scalars(select(SourceACL).where(SourceACL.org_id == _org(), SourceACL.source_id == s.id)).all()
+        groups = []
+        for a in acls:
+            g = db.get(Group, a.subject_id)
+            groups.append({"group": g.name if g else a.subject_id, "access": a.access, "origin": a.origin})
+        out.append({"source": s.name, "kind": s.kind, "acls": groups})
+    return out
+
+
+@router.get("/access/audit")
+def access_audit(db: Session = Depends(get_session)):
+    from apps.api.models.access import AccessLog
+
+    rows = db.scalars(select(AccessLog).order_by(AccessLog.occurred_at.desc())).all()[:100]
+    return [
+        {"action": r.action, "target_type": r.target_type, "target_id": r.target_id,
+         "decision": r.decision, "reason": r.reason,
+         "occurred_at": r.occurred_at.isoformat() if r.occurred_at else None}
+        for r in rows
+    ]
+
+
 # --- governance / monitoring ----------------------------------------------
 @router.get("/staleness")
 def staleness(db: Session = Depends(get_session)):

@@ -39,3 +39,8 @@ class Connector(abc.ABC):
     @abc.abstractmethod
     def pull(self, since: datetime | None = None) -> list[NormalizedArtifact]:
         """Return artifacts created/updated since `since` (None = full sync)."""
+
+    def pull_acls(self) -> dict:
+        """Mirror source-native permissions (§6). Returns {"groups": [...]} of the
+        groups that can access this source. Default: none ⇒ default-deny (VIS-1)."""
+        return {"groups": []}

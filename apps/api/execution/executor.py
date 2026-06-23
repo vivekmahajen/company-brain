@@ -113,6 +113,14 @@ class GovernedExecutor:
 
         log_base["skill_id"] = skill.id
 
+        # Visibility check BEFORE any fact lookup (VIS-2; hidden == not found).
+        from apps.api.access.visibility import VisibilityFilter
+
+        if not VisibilityFilter(db, principal).visible("skill", skill.id, action="invoke"):
+            self._log(outcome="denied_permission", gate_decision="not_visible", **log_base)
+            db.commit()
+            return _denied("denied_permission", "skill not found or not visible")
+
         if binding.side_effecting and not has_scope(principal, f"invoke:{tool_name}"):
             self._log(outcome="denied_permission", gate_decision="missing_scope", **log_base)
             db.commit()

@@ -51,6 +51,13 @@ export const api = {
   evalsLatest: () => req("/evals/latest"),
   evalsRuns: () => req("/evals/runs"),
   evalsFailures: (runId: string) => req(`/evals/runs/${runId}/failures`),
+
+  // Access control (permissions)
+  accessPrincipals: () => req("/access/principals"),
+  viewAs: (token: string, task?: string) =>
+    req("/access/view-as", { method: "POST", body: JSON.stringify({ token, task }) }),
+  accessSources: () => req("/access/sources"),
+  accessAudit: () => req("/access/audit"),
 };
 
 export type Route = { slug: string; title: string; score: number; confidence: number; reason: string };

@@ -21,6 +21,9 @@ def single_run_metrics(results: list[dict]) -> dict:
     m["GAR"] = _f(p, t)
     p, t = _rate(results, "execution")
     m["SEC"] = _f(p, t)
+    p, t = _rate(results, "permission")
+    if t:
+        m["PER"] = _f(p, t)
 
     # Routing
     p, t = _rate(results, "routing", lambda r: not r["detail"].get("abstention_case"))

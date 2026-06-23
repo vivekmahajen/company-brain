@@ -78,6 +78,20 @@ python scripts/mcp_smoke.py
 Full agent guide + the two refund paths: **[docs/AGENTS.md](docs/AGENTS.md)**.
 Pending approvals surface in the console **Review queue**.
 
+## Permissions-aware access
+
+An agent sees exactly what its principal's roles/groups permit — no more, no
+less — with permissions **mirrored from sources** and **propagated through
+derived knowledge**. A skill's audience is the most-restrictive intersection of
+every source it draws on, so a refund skill built from a private `#support`
+channel is invisible to a sales agent even though it also draws on a public doc
+(aggregation leak prevented). Enforced at one `VisibilityFilter` choke point on
+every read path (MCP `resolve`/`list`/`get`/`invoke`, REST, console), serve-time
+against current ACLs (revocation is immediate), fail-closed, with hidden ==
+"not found" (no existence leak) and per-viewer provenance redaction. Measured by
+**PER** on the CBE scorecard; the console **Access** page has a "view as"
+simulator and an access audit log.
+
 ## Adding policies, knowledge, and capabilities
 
 Three ways to extend the Brain, all live (no redeploy needed for the first two):
@@ -101,9 +115,11 @@ Three ways to extend the Brain, all live (no redeploy needed for the first two):
 
 The brain's quality is a published number, not a claim. `make eval` runs the
 **Company Brain Eval (CBE)** against versioned golden datasets and emits a
-scorecard. Two headline metrics nobody in the memory category reports:
+scorecard. Three headline metrics nobody in the memory category reports:
 
 - **GAR — Guardrail Adherence Rate** (deterministic, no LLM judge, target 100%)
+- **PER — Permission Enforcement Rate** (deterministic; zero-leak under
+  aggregation/provenance/revocation attacks, target 100%)
 - **SEC — Skill-Execution Correctness**
 
 Both drive the *real* `GovernedExecutor`, so a green CBE is a property of the

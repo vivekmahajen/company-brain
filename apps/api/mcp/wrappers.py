@@ -39,10 +39,10 @@ def _wrapper_schema(binding: SkillBinding) -> dict:
     return {"type": "object", "properties": props, "required": required}
 
 
-def build_skill_tools(db: Session, org_id: str) -> list[dict]:
+def build_skill_tools(db: Session, org_id: str, skills: list[Skill] | None = None) -> list[dict]:
     """Return wrapper tool descriptors for every binding of every visible skill."""
     tools = []
-    for skill in visible_approved_skills(db, org_id):
+    for skill in (skills if skills is not None else visible_approved_skills(db, org_id)):
         bindings = db.scalars(select(SkillBinding).where(SkillBinding.skill_id == skill.id)).all()
         for b in bindings:
             gate = b.approval_expression if b.approval_required else "never"

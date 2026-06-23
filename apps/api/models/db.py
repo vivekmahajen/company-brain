@@ -84,7 +84,7 @@ def init_db() -> None:
         with engine.begin() as conn:
             conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
     # Import models so they register on Base.metadata before create_all.
-    from apps.api.models import serving, tables  # noqa: F401
+    from apps.api.models import access, serving, tables  # noqa: F401
 
     Base.metadata.create_all(engine)
     _ensure_added_columns()
@@ -104,6 +104,9 @@ _ADDED_COLUMNS = {
     },
     "order_record": {
         "provider_charge_id": "VARCHAR",
+    },
+    "principal": {
+        "external_subject": "VARCHAR",
     },
 }
 

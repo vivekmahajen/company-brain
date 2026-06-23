@@ -32,6 +32,7 @@ class Principal(Base):
     scopes_jsonb: Mapped[list] = mapped_column(JSON, default=list)
     token_hash: Mapped[str] = mapped_column(String, index=True, nullable=False)
     status: Mapped[str] = mapped_column(String, default="active")  # active | disabled
+    external_subject: Mapped[str | None] = mapped_column(String)  # SSO sub / agent id (§6)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
 

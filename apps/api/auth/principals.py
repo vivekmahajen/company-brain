@@ -68,6 +68,20 @@ SEED_PRINCIPALS = [
         "scopes": ["approve:*", "invoke:*"],
         "token": "human-token",
     },
+    {
+        "kind": "agent",
+        "display_name": "Support agent (support-team)",
+        "role": "agent",
+        "scopes": ["invoke:*"],
+        "token": "agent-support-token",
+    },
+    {
+        "kind": "agent",
+        "display_name": "Sales agent (sales-team)",
+        "role": "agent",
+        "scopes": ["invoke:*"],
+        "token": "agent-sales-token",
+    },
 ]
 
 

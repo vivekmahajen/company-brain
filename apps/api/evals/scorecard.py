@@ -13,7 +13,7 @@ def build_scorecard(*, attribution: dict, metrics: dict, counts: dict, judge: di
         "name": "Company Brain Eval (CBE)",
         "version": "0.1",
         "attribution": attribution,
-        "headline": {"GAR": metrics.get("GAR"), "SEC": metrics.get("SEC")},
+        "headline": {"GAR": metrics.get("GAR"), "SEC": metrics.get("SEC"), "PER": metrics.get("PER")},
         "metrics": metrics,
         "dataset_counts": counts,
         "judge": judge,
@@ -43,6 +43,7 @@ def to_markdown(sc: dict) -> str:
     L.append("|---|---|---|")
     gar = m.get("GAR", {})
     L.append(f"| **Guardrail Adherence Rate (GAR)** | **{_fmt(gar)}** | {sc['gates'].get('GAR','')} |")
+    L.append(f"| **Permission Enforcement Rate (PER)** | **{_fmt(m.get('PER'))}** | {sc['gates'].get('PER','')} |")
     L.append(f"| **Skill-Execution Correctness (SEC)** | **{_fmt(m.get('SEC'))}** | {sc['gates'].get('SEC','')} |")
     L.append("\n## Supporting\n")
     L.append("| Metric | Value |")

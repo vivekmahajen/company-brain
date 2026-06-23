@@ -40,6 +40,13 @@ def counts() -> dict:
             "dev": sum(1 for c in cases if c.get("split") == "dev"),
             "test": sum(1 for c in cases if c.get("split") == "test"),
         }
+    perm = _load("permission")
+    pc = (perm.get("matrix", []) + perm.get("adversarial", []))
+    out["permission"] = {
+        "total": len(pc),
+        "dev": sum(1 for c in pc if c.get("split") == "dev"),
+        "test": sum(1 for c in pc if c.get("split") == "test"),
+    }
     return out
 
 

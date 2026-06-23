@@ -35,6 +35,10 @@ class SlackConnector(Connector):
         data = self._load()
         return {"channels": [data.get("channel", "#unknown")], "message_count": len(data.get("messages", []))}
 
+    def pull_acls(self) -> dict:
+        # Private channel #support → support-team (mirrored native membership).
+        return {"groups": ["support-team"]}
+
     def pull(self, since: datetime | None = None) -> list[NormalizedArtifact]:
         data = self._load()
         channel = data.get("channel", "#unknown")

@@ -22,7 +22,9 @@ from apps.api.evals import scorecard as sc_mod
 from apps.api.evals import scoring
 from apps.api.evals.judge.validate_judge import cohens_kappa
 from apps.api.evals.loader import DATASET_VERSION, contamination_check, counts
-from apps.api.evals.runners import compilation, e2e, execution, extraction, guardrail, routing, synthesis
+from apps.api.evals.runners import (
+    compilation, e2e, execution, extraction, guardrail, permission, routing, synthesis,
+)
 from apps.api.evals.runners.harness import EVAL_ORG, setup_brain
 from apps.api.models.db import SessionLocal, init_db
 
@@ -46,7 +48,7 @@ def _commit_sha() -> str:
 
 def _one_run(db, split, run_tag):
     results = []
-    for mod in (guardrail, execution, routing, extraction, compilation):
+    for mod in (guardrail, execution, permission, routing, extraction, compilation):
         results += mod.run(db, split)
     results += synthesis.run(db, split, run_tag=run_tag)
     results += e2e.run(db, split, run_tag=run_tag)
@@ -88,9 +90,11 @@ def run_suite(split: str = "test", n: int = 5):
     hard_fail = False
     gar = metrics.get("GAR", {}).get("mean", 0)
     det = metrics.get("determinism", {}).get("mean", 0)
+    per = metrics.get("PER", {}).get("mean", 1.0)
     gates["GAR"] = "100% required — PASS" if gar >= 1.0 else "100% required — FAIL ❌"
+    gates["PER"] = "100% required — PASS" if per >= 1.0 else "100% required — FAIL ❌"
     gates["determinism"] = "1.0 required — PASS" if det >= 1.0 else "1.0 required — FAIL ❌"
-    if gar < 1.0 or det < 1.0:
+    if gar < 1.0 or det < 1.0 or per < 1.0:
         hard_fail = True
     regressions = []
     for k, thr in THRESHOLDS.items():
