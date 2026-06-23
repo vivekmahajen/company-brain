@@ -1,8 +1,15 @@
-"""Per-capability compile templates: required inputs + tool bindings.
+"""Per-capability compile templates: required inputs + tool bindings + routing.
 
-These declare the *executable surface* (tools an agent may call, approval gates).
-Thresholds are not hard-coded here — they are filled from the canonical KUs at
-compile time. Keep templates minimal; the knowledge drives the rest.
+Adding a capability is data, not code: add a template here, optionally provide
+fixtures/knowledge, and the compiler + resolver pick it up. Thresholds are NOT
+hard-coded — they are filled from the canonical KUs at compile time.
+
+Tool approval gates are generic:
+  - approval_for_action: the policy action that triggers a gate (e.g.
+    "manager_approval").
+  - approval_field:      the agent-input field used in the gate expression.
+  - threshold_kind:      which extracted threshold to read (amount|percent|days).
+The compiler emits `approval_required_when: "<field> > <threshold>"`.
 """
 from __future__ import annotations
 
@@ -25,24 +32,19 @@ SKILL_TEMPLATES: dict[str, dict] = {
                 "side_effecting": True,
                 "schema": {
                     "type": "object",
-                    "properties": {
-                        "order_id": {"type": "string"},
-                        "amount": {"type": "number"},
-                    },
+                    "properties": {"order_id": {"type": "string"}, "amount": {"type": "number"}},
                     "required": ["order_id", "amount"],
                 },
-                # approval expression filled from the manager-approval threshold KU
                 "approval_for_action": "manager_approval",
+                "approval_field": "amount",
+                "threshold_kind": "amount",
             },
             {
                 "name": "update_support_ticket",
                 "side_effecting": True,
                 "schema": {
                     "type": "object",
-                    "properties": {
-                        "order_id": {"type": "string"},
-                        "note": {"type": "string"},
-                    },
+                    "properties": {"order_id": {"type": "string"}, "note": {"type": "string"}},
                     "required": ["order_id"],
                 },
                 "approval_for_action": None,
@@ -55,5 +57,106 @@ SKILL_TEMPLATES: dict[str, dict] = {
             "refund an order",
         ],
         "keywords": ["refund", "money back", "chargeback", "reimburse", "return payment"],
-    }
+    },
+    "pricing": {
+        "slug": "handle-pricing-exception",
+        "title": "Handle a pricing exception",
+        "description": (
+            "Decide and apply pricing exceptions and discounts, including approval "
+            "thresholds and deal-desk escalation. Use when a customer asks for a "
+            "discount or special pricing."
+        ),
+        "inputs": [
+            "account_id (string, required)",
+            "discount_percent (number, required)",
+            "reason (string, optional)",
+        ],
+        "tools": [
+            {
+                "name": "apply_discount",
+                "side_effecting": True,
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "account_id": {"type": "string"},
+                        "discount_percent": {"type": "number"},
+                    },
+                    "required": ["account_id", "discount_percent"],
+                },
+                "approval_for_action": "manager_approval",
+                "approval_field": "discount_percent",
+                "threshold_kind": "percent",
+            },
+            {
+                "name": "update_crm",
+                "side_effecting": True,
+                "schema": {
+                    "type": "object",
+                    "properties": {"account_id": {"type": "string"}, "note": {"type": "string"}},
+                    "required": ["account_id"],
+                },
+                "approval_for_action": None,
+            },
+        ],
+        "intents": [
+            "approve a discount",
+            "customer wants a lower price",
+            "grant a pricing exception",
+            "special pricing request",
+        ],
+        "keywords": ["discount", "pricing", "price exception", "deal desk", "markdown", "special pricing"],
+    },
+    "incident": {
+        "slug": "respond-to-incident",
+        "title": "Respond to a production incident",
+        "description": (
+            "Triage and respond to production incidents: classify severity, page "
+            "on-call, open an incident channel, and post status updates. Use when a "
+            "service is down or degraded."
+        ),
+        "inputs": [
+            "service (string, required)",
+            "severity (string, required)",
+            "summary (string, optional)",
+        ],
+        "tools": [
+            {
+                "name": "page_oncall",
+                "side_effecting": True,
+                "schema": {
+                    "type": "object",
+                    "properties": {"service": {"type": "string"}, "severity": {"type": "string"}},
+                    "required": ["service", "severity"],
+                },
+                "approval_for_action": None,
+            },
+            {
+                "name": "open_incident_channel",
+                "side_effecting": True,
+                "schema": {
+                    "type": "object",
+                    "properties": {"service": {"type": "string"}},
+                    "required": ["service"],
+                },
+                "approval_for_action": None,
+            },
+            {
+                "name": "post_status_update",
+                "side_effecting": True,
+                "schema": {
+                    "type": "object",
+                    "properties": {"service": {"type": "string"}, "message": {"type": "string"}},
+                    "required": ["service", "message"],
+                },
+                "approval_for_action": None,
+            },
+        ],
+        "intents": [
+            "respond to an incident",
+            "production is down",
+            "service outage",
+            "page the on-call engineer",
+        ],
+        "keywords": ["incident", "outage", "down", "sev1", "pager", "on-call", "post-mortem"],
+    },
 }

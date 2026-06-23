@@ -1,0 +1,11 @@
+{
+  "pages": [
+    {
+      "id": "notion-pricing-policy",
+      "title": "Pricing Exception Policy",
+      "author": "deal-desk@acme.com",
+      "last_edited": "2026-02-01T10:00:00Z",
+      "content": "Discounts up to 15% are automatically approved.\nDiscounts above 20% require manager sign-off.\nNever offer a discount above 40% without VP approval.\nTo apply a pricing exception:\n1. Look up the account by account_id.\n2. Verify the requested discount_percent.\n3. If eligible, apply the discount and update the CRM.\nEscalation: route deal-desk exceptions to the #deal-desk channel with account, discount, and reason."
+    }
+  ]
+}

@@ -26,6 +26,21 @@ export const api = {
     req("/execute", { method: "POST", body: JSON.stringify({ slug, tool, inputs }) }),
   staleness: () => req("/staleness"),
   drift: () => req("/drift"),
+
+  // Governance policies (M8)
+  policies: () => req("/policies"),
+  createPolicy: (body: {
+    name: string;
+    tool: string;
+    when: string;
+    require?: string;
+    enforcement?: string;
+  }) => req("/policies", { method: "POST", body: JSON.stringify(body) }),
+  deletePolicy: (id: string) => req(`/policies/${id}`, { method: "DELETE" }),
+
+  // Add knowledge (paste text -> extract -> recompile)
+  addKnowledge: (text: string, source_name = "Manual entry") =>
+    req("/knowledge/add", { method: "POST", body: JSON.stringify({ text, source_name }) }),
 };
 
 export type Route = { slug: string; title: string; score: number; confidence: number; reason: string };

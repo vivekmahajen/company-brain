@@ -17,6 +17,23 @@ from apps.api.llm.embeddings import embed
 from apps.api.llm.prompts import EXTRACTION_SYSTEM
 from apps.api.models.tables import KU_TYPES, Artifact, KnowledgeUnit, KUProvenance
 
+# Capability topics, matched by keyword on the artifact. Each maps to a compile
+# template in compiler/templates.py. Adding a capability = add a row here + a
+# template + (optional) fixtures — no engine changes.
+_TOPIC_KEYWORDS = {
+    "refund": ("refund", "chargeback", "money back"),
+    "pricing": ("discount", "pricing", "price exception", "deal desk"),
+    "incident": ("incident", "outage", "on-call", "on call", "sev1", "sev 1", "post-mortem"),
+}
+
+
+def _detect_topic(text: str) -> str | None:
+    low = text.lower()
+    for topic, kws in _TOPIC_KEYWORDS.items():
+        if any(k in low for k in kws):
+            return topic
+    return None
+
 
 def extract_artifact(db: Session, artifact: Artifact, *, llm=None) -> list[KnowledgeUnit]:
     llm = llm or get_llm()
@@ -29,7 +46,7 @@ def extract_artifact(db: Session, artifact: Artifact, *, llm=None) -> list[Knowl
 
     # Document-level topic so units that don't repeat the keyword (e.g. a
     # guardrail, a bare procedure step) still attach to the right capability.
-    doc_topic = "refund" if "refund" in artifact.content_text.lower() else None
+    doc_topic = _detect_topic(artifact.content_text)
 
     resp = llm.complete_json(
         system=EXTRACTION_SYSTEM,

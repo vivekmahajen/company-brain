@@ -97,6 +97,21 @@ def _days(ku) -> int | None:
     return p.get("days_window", p.get("days"))
 
 
+def _percent(ku) -> int | None:
+    p = ku.payload_jsonb or {}
+    return p.get("percent_threshold", p.get("percent"))
+
+
+def _threshold_for(kus, action: str, kind: str) -> int | None:
+    """First threshold of `kind` (amount|percent|days) on a rule with `action`."""
+    getter = {"amount": _amount, "percent": _percent, "days": _days}.get(kind, _amount)
+    for k in _find(kus, "policy_rule", action=action):
+        v = getter(k)
+        if v is not None:
+            return v
+    return None
+
+
 def compile_skill(db: Session, org_id: str, topic: str) -> Skill | None:
     tmpl = SKILL_TEMPLATES.get(topic)
     if not tmpl:
@@ -116,16 +131,14 @@ def compile_skill(db: Session, org_id: str, topic: str) -> Skill | None:
         return latest
 
     # --- derive thresholds from canonical KUs ----------------------------
-    manager = _find(kus, "policy_rule", action="manager_approval")
     auto = _find(kus, "policy_rule", action="auto_approve")
     guardrail_kus = _find(kus, "policy_rule", kind="guardrail")
+    policy_rules = _find(kus, "policy_rule")
     steps = sorted(_find(kus, "procedure_step"), key=lambda k: (k.payload_jsonb or {}).get("step_number", 99))
 
-    approval_amount = next((_amount(k) for k in manager if _amount(k)), None)
+    approval_amount = next((_amount(k) for k in _find(kus, "policy_rule", action="manager_approval") if _amount(k)), None)
     auto_days = next((_days(k) for k in auto if _days(k)), None)
-    guardrails = [(k.payload_jsonb or {}).get("constraint", k.statement) for k in guardrail_kus] or [
-        "Never exceed the original charge amount."
-    ]
+    guardrails = [(k.payload_jsonb or {}).get("constraint", k.statement) for k in guardrail_kus]
 
     # --- tool bindings (fill approval expressions from thresholds) -------
     fm_tools = []
@@ -133,9 +146,14 @@ def compile_skill(db: Session, org_id: str, topic: str) -> Skill | None:
     for t in tmpl["tools"]:
         approval_expr = "never"
         approval_required = False
-        if t.get("approval_for_action") == "manager_approval" and approval_amount:
-            approval_expr = f"amount > {approval_amount}"
-            approval_required = True
+        action = t.get("approval_for_action")
+        if action:
+            kind = t.get("threshold_kind", "amount")
+            field = t.get("approval_field", "amount")
+            thr = _threshold_for(kus, action, kind)
+            if thr is not None:
+                approval_expr = f"{field} > {thr}"
+                approval_required = True
         fm_tools.append(
             {
                 "name": t["name"],
@@ -156,7 +174,7 @@ def compile_skill(db: Session, org_id: str, topic: str) -> Skill | None:
     provenance = _provenance_footnotes(db, kus)
 
     # --- body: executable decision procedure ----------------------------
-    body = _render_body(topic, approval_amount, auto_days, steps, guardrails)
+    body = _render_body(topic, tmpl, approval_amount, auto_days, steps, guardrails, policy_rules)
 
     has_side_effects = any(t["side_effecting"] for t in fm_tools)
     # Side-effecting skills never auto-approve.
@@ -199,37 +217,51 @@ def compile_skill(db: Session, org_id: str, topic: str) -> Skill | None:
     return skill
 
 
-def _render_body(topic, approval_amount, auto_days, steps, guardrails) -> str:
-    if topic != "refund":
-        # generic fallback
-        lines = ["## When to use", "", "Use for the configured capability.", "", "## Decision procedure", ""]
+def _render_body(topic, tmpl, approval_amount, auto_days, steps, guardrails, policy_rules) -> str:
+    if topic == "refund":
+        amt = approval_amount or 500
+        days = auto_days or 30
+        proc = [
+            "1. Look up the order via `order_id`. If older than 90 days → escalate (guardrail).",
+            f"2. If `amount <= {amt}` AND within {days} days of purchase → call `stripe_refund` and `update_support_ticket`.",
+            f"3. If `amount > {amt}` → return APPROVAL_REQUIRED with a summary for a manager.",
+            "4. If a documented exception applies (see provenance) → follow it and log the rationale.",
+        ]
+        return "\n".join(
+            [
+                "## When to use",
+                "",
+                "A customer is requesting a refund or chargeback reversal.",
+                "",
+                "## Decision procedure",
+                "",
+                *proc,
+                "",
+                "## Escalation",
+                "",
+                "Route to #refund-approvals; attach order, amount, reason, and policy citation.",
+            ]
+        )
+
+    # Generic, capability-agnostic body built from the extracted KUs.
+    lines = ["## When to use", "", tmpl["description"], ""]
+    if steps:
+        lines += ["## Procedure", ""]
         for i, s in enumerate(steps, 1):
             lines.append(f"{i}. {(s.payload_jsonb or {}).get('action', s.statement)}")
-        return "\n".join(lines)
+        lines.append("")
 
-    amt = approval_amount or 500
-    days = auto_days or 30
-    proc = [
-        f"1. Look up the order via `order_id`. If older than 90 days → escalate (guardrail).",
-        f"2. If `amount <= {amt}` AND within {days} days of purchase → call `stripe_refund` and `update_support_ticket`.",
-        f"3. If `amount > {amt}` → return APPROVAL_REQUIRED with a summary for a manager.",
-        "4. If a documented exception applies (see provenance) → follow it and log the rationale.",
-    ]
-    return "\n".join(
-        [
-            "## When to use",
-            "",
-            "A customer is requesting a refund or chargeback reversal.",
-            "",
-            "## Decision procedure",
-            "",
-            *proc,
-            "",
-            "## Escalation",
-            "",
-            "Route to #refund-approvals; attach order, amount, reason, and policy citation.",
-        ]
-    )
+    decision = [r for r in policy_rules if (r.payload_jsonb or {}).get("kind") != "guardrail"
+                and (r.payload_jsonb or {}).get("action") != "escalate"]
+    if decision:
+        lines += ["## Decision rules", ""]
+        for r in decision:
+            lines.append(f"- {r.statement}")
+        lines.append("")
+
+    escalations = [r.statement for r in policy_rules if (r.payload_jsonb or {}).get("action") == "escalate"]
+    lines += ["## Escalation", "", (escalations[0] if escalations else "Escalate to the owning team with full context.")]
+    return "\n".join(lines)
 
 
 def _write_skill_file(slug: str, body_md: str) -> str:

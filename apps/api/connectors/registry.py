@@ -41,6 +41,12 @@ class TranscriptConnector(_Stub):
     kind = "transcript"
 
 
+class ManualConnector(_Stub):
+    """Manual console entry; artifacts are pushed in directly, not pulled."""
+
+    kind = "manual"
+
+
 REGISTRY: dict[str, type[Connector]] = {
     "slack": SlackConnector,
     "notion": NotionConnector,
@@ -50,6 +56,7 @@ REGISTRY: dict[str, type[Connector]] = {
     "zendesk": ZendeskConnector,
     "postgres": PostgresReaderConnector,
     "transcript": TranscriptConnector,
+    "manual": ManualConnector,
 }
 
 

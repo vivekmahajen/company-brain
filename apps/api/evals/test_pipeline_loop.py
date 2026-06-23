@@ -7,7 +7,8 @@ from apps.api.services.ingest import sync_default_sources
 
 def test_artifacts_landed(seeded, db, org_id):
     arts = db.scalars(select(Artifact).where(Artifact.org_id == org_id)).all()
-    assert len(arts) == 5  # 3 slack + 2 notion
+    # 3 slack + 2 refund notion + 1 pricing notion + 1 incident notion
+    assert len(arts) == 7
     assert all(a.content_hash for a in arts)
 
 

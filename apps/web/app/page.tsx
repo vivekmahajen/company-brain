@@ -11,6 +11,9 @@ export default function Dashboard() {
   const [amount, setAmount] = useState(620);
   const [loading, setLoading] = useState(false);
   const [pipelineMsg, setPipelineMsg] = useState("");
+  const [knowledge, setKnowledge] = useState("");
+  const [knowledgeMsg, setKnowledgeMsg] = useState("");
+  const [adding, setAdding] = useState(false);
 
   async function testBrain() {
     setLoading(true);
@@ -34,6 +37,28 @@ export default function Dashboard() {
     );
   }
 
+  async function addKnowledge() {
+    if (!knowledge.trim()) return;
+    setAdding(true);
+    setKnowledgeMsg("");
+    try {
+      const r = await api.addKnowledge(knowledge);
+      if (r.error) {
+        setKnowledgeMsg(`Error: ${r.error}`);
+      } else {
+        const recompiled = (r.recompiled || []).map((s: any) => `${s.slug} v${s.version}`).join(", ");
+        setKnowledgeMsg(
+          `Added ${r.units_created?.length || 0} knowledge unit(s)` +
+            (r.detected_topic ? ` (topic: ${r.detected_topic})` : "") +
+            (recompiled ? ` → recompiled ${recompiled}` : "")
+        );
+        setKnowledge("");
+      }
+    } finally {
+      setAdding(false);
+    }
+  }
+
   async function dryRunExecute() {
     if (!skill) return;
     const res = await api.execute(skill.slug, "stripe_refund", { order_id: "demo-1", amount });
@@ -54,6 +79,29 @@ export default function Dashboard() {
           Rebuild the Brain
         </button>
         {pipelineMsg && <p className="mt-3 text-sm text-neutral-300">{pipelineMsg}</p>}
+      </section>
+
+      <section className="rounded-lg border border-neutral-800 p-4">
+        <h2 className="mb-2 text-lg font-medium">Add knowledge</h2>
+        <p className="mb-2 text-xs text-neutral-400">
+          Paste a policy, decision, or runbook note. It&apos;s extracted into typed knowledge units and
+          the affected skill is recompiled. Try: “Refunds within 45 days are now auto-approved.”
+        </p>
+        <textarea
+          value={knowledge}
+          onChange={(e) => setKnowledge(e.target.value)}
+          rows={3}
+          placeholder="Paste a company policy or decision…"
+          className="w-full rounded border border-neutral-700 bg-neutral-900 p-2 text-sm"
+        />
+        <button
+          onClick={addKnowledge}
+          disabled={adding}
+          className="mt-2 rounded bg-violet-600 px-4 py-2 text-sm font-medium hover:bg-violet-500 disabled:opacity-50"
+        >
+          {adding ? "Adding…" : "Add to Brain"}
+        </button>
+        {knowledgeMsg && <p className="mt-3 text-sm text-neutral-300">{knowledgeMsg}</p>}
       </section>
 
       <section className="rounded-lg border border-neutral-800 p-4">

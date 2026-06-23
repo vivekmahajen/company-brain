@@ -10,11 +10,12 @@ def test_auto_approve_rules_collapsed(seeded, db, org_id):
         select(KnowledgeUnit).where(
             KnowledgeUnit.org_id == org_id,
             KnowledgeUnit.type == "policy_rule",
+            KnowledgeUnit.topic == "refund",
             KnowledgeUnit.valid_to.is_(None),
         )
     ).all()
     auto = [k for k in active if (k.payload_jsonb or {}).get("action") == "auto_approve"]
-    assert len(auto) == 1, f"expected 1 canonical auto-approve rule, got {len(auto)}"
+    assert len(auto) == 1, f"expected 1 canonical refund auto-approve rule, got {len(auto)}"
 
 
 def test_threshold_supersession_auditable(seeded, db, org_id):

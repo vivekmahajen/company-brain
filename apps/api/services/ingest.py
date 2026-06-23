@@ -59,12 +59,30 @@ def sync_source(db: Session, source: Source, *, org_id: str | None = None) -> di
     return {"source": source.name, "kind": source.kind, "inserted": inserted, "skipped": skipped}
 
 
+import os
+
+# Default fixture sources for the bundled demo (refund + pricing + incident).
+# Each entry: (connector kind, display name, fixture file under fixtures/).
+_DEFAULT_SOURCES = [
+    ("slack", "#support", "slack/support.json"),
+    ("notion", "Refund Policy Space", "notion/refund-policy.json"),
+    ("notion", "Pricing Policy Space", "notion/pricing-policy.json"),
+    ("notion", "Incident Runbook Space", "notion/incident-runbook.json"),
+]
+
+
 def sync_default_sources(db: Session, org_id: str | None = None) -> list[dict]:
-    """Convenience: connect + sync the Phase-1 Slack + Notion fixture sources."""
+    """Connect + sync the bundled Slack + Notion fixture sources (idempotent)."""
     org_id = org_id or get_settings().default_org_id
+    fixtures_dir = get_settings().fixtures_dir
     results = []
-    for kind, name in (("slack", "#support"), ("notion", "Refund Policy Space")):
-        src = ensure_source(db, org_id=org_id, kind=kind, name=name)
+    for kind, name, rel in _DEFAULT_SOURCES:
+        config = {"fixture_path": os.path.join(fixtures_dir, rel)}
+        src = ensure_source(db, org_id=org_id, kind=kind, name=name, config=config)
+        # keep config current if the source already existed
+        if src.config_jsonb != config:
+            src.config_jsonb = config
+            db.flush()
         results.append(sync_source(db, src, org_id=org_id))
     db.commit()
     return results

@@ -1,0 +1,11 @@
+{
+  "pages": [
+    {
+      "id": "notion-incident-runbook",
+      "title": "Incident Response Runbook",
+      "author": "sre@acme.com",
+      "last_edited": "2026-02-10T10:00:00Z",
+      "content": "A Sev1 incident must be acknowledged within 5 minutes.\nNever resolve a Sev1 incident without a written post-mortem.\nTo respond to an incident:\n1. Classify the severity of the incident.\n2. Page the on-call engineer for the affected service.\n3. Open an incident channel and post a status update.\nEscalation: for a Sev1 outage, escalate to the incident commander."
+    }
+  ]
+}

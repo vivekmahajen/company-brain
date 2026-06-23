@@ -18,6 +18,7 @@ _SENT_SPLIT = re.compile(r"(?<=[.!?])\s+|\n+")
 _NUM_LIST = re.compile(r"^\s*\d+[.)]\s+(.*)$")
 _DOLLAR = re.compile(r"\$\s?(\d[\d,]*)")
 _DAYS = re.compile(r"(\d+)\s*[- ]?\s*days?")
+_PERCENT = re.compile(r"(\d+)\s*%")
 
 
 def _amount(text: str) -> int | None:
@@ -27,6 +28,11 @@ def _amount(text: str) -> int | None:
 
 def _days(text: str) -> int | None:
     m = _DAYS.search(text)
+    return int(m.group(1)) if m else None
+
+
+def _percent(text: str) -> int | None:
+    m = _PERCENT.search(text)
     return int(m.group(1)) if m else None
 
 
@@ -49,6 +55,7 @@ def _classify_segment(seg: str) -> tuple[str, dict, float] | None:
     low = seg.lower()
     amount = _amount(seg)
     days = _days(seg)
+    percent = _percent(seg)
 
     list_m = _NUM_LIST.match(seg)
     if list_m:
@@ -66,6 +73,8 @@ def _classify_segment(seg: str) -> tuple[str, dict, float] | None:
             payload["amount"] = amount
         if days is not None:
             payload["days"] = days
+        if percent is not None:
+            payload["percent"] = percent
         return ("policy_rule", payload, 0.92)
 
     # Glossary: "X means Y" / "X is defined as Y"
@@ -102,8 +111,10 @@ def _classify_segment(seg: str) -> tuple[str, dict, float] | None:
             payload["amount_threshold"] = amount
         if days is not None:
             payload["days_window"] = days
+        if percent is not None:
+            payload["percent_threshold"] = percent
         # confidence higher when an explicit threshold is present
-        conf = 0.9 if (amount is not None or days is not None) else 0.62
+        conf = 0.9 if (amount is not None or days is not None or percent is not None) else 0.62
         return ("policy_rule", payload, conf)
 
     return None

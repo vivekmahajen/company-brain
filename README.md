@@ -59,6 +59,25 @@ export LLM_PROVIDER=anthropic
 export ANTHROPIC_API_KEY=sk-ant-...
 ```
 
+## Adding policies, knowledge, and capabilities
+
+Three ways to extend the Brain, all live (no redeploy needed for the first two):
+
+- **Governance guardrails** — enforcement rules checked at execution time
+  (e.g. `discount_percent > 20 ⇒ approval`). Add via the **Policies** page in the
+  console or `POST /api/policies {name, tool, when, require, enforcement}`.
+  `when` is a safe `field op number` expression; matching tool calls return
+  `approval_required` instead of acting.
+- **Policy knowledge** — paste a policy/decision/runbook note in the dashboard
+  **Add knowledge** box (or `POST /api/knowledge/add {text}`). It's extracted
+  into typed KUs with provenance, synthesized, and the affected skill is
+  recompiled (new `needs_review` version).
+- **New capabilities/skills** — add a template to
+  `apps/api/compiler/templates.py` (inputs, tool bindings, intents, keywords)
+  and a topic to `_TOPIC_KEYWORDS` in `extraction/extractor.py`; provide
+  knowledge via fixtures or the Add-knowledge box. Refund, **pricing
+  exceptions**, and **incident response** ship built-in.
+
 ## Deploy
 
 API on Railway (Dockerfile + `railway.json` included), console on Vercel

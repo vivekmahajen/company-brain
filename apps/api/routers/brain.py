@@ -18,9 +18,11 @@ from apps.api.models.tables import (
     Skill,
     Source,
 )
+from apps.api.governance.policy import create_policy, delete_policy, list_policies
 from apps.api.monitor.drift import list_drift, record_observed_outcome
 from apps.api.resolver.resolver import lint_resolver
 from apps.api.services.execution import execute_tool, get_skill, list_skills, resolve_task
+from apps.api.services.knowledge import add_text_knowledge
 from apps.api.services.pipeline import run_full_pipeline
 
 router = APIRouter()
@@ -156,6 +158,49 @@ class ExecBody(BaseModel):
 @router.post("/execute")
 def execute_endpoint(body: ExecBody, db: Session = Depends(get_session)):
     return execute_tool(db, body.slug, body.tool, body.inputs, agent_id=body.agent_id, org_id=_org())
+
+
+# --- governance: policies (M8) --------------------------------------------
+@router.get("/policies")
+def policies_list(db: Session = Depends(get_session)):
+    return list_policies(db, _org())
+
+
+class PolicyBody(BaseModel):
+    name: str
+    tool: str
+    when: str  # e.g. "amount > 500" or "discount_percent > 20"
+    require: str = "human_approval"
+    enforcement: str = "block"  # block | warn | log
+
+
+@router.post("/policies")
+def policies_create(body: PolicyBody, db: Session = Depends(get_session)):
+    return create_policy(
+        db,
+        _org(),
+        name=body.name,
+        tool=body.tool,
+        when=body.when,
+        require=body.require,
+        enforcement=body.enforcement,
+    )
+
+
+@router.delete("/policies/{policy_id}")
+def policies_delete(policy_id: str, db: Session = Depends(get_session)):
+    return delete_policy(db, _org(), policy_id)
+
+
+# --- knowledge: manual add ------------------------------------------------
+class AddKnowledgeBody(BaseModel):
+    text: str
+    source_name: str = "Manual entry"
+
+
+@router.post("/knowledge/add")
+def knowledge_add(body: AddKnowledgeBody, db: Session = Depends(get_session)):
+    return add_text_knowledge(db, _org(), text=body.text, source_name=body.source_name)
 
 
 # --- governance / monitoring ----------------------------------------------
