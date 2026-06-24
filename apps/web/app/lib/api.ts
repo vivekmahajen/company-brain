@@ -50,6 +50,7 @@ export const api = {
   // Evals (CBE scorecard)
   evalsLatest: () => req("/evals/latest"),
   evalsRuns: () => req("/evals/runs"),
+  evalsExtractionLive: () => req("/evals/extraction-live"),
   evalsFailures: (runId: string) => req(`/evals/runs/${runId}/failures`),
 
   // Access control (permissions)

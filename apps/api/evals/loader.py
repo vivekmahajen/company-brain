@@ -13,7 +13,9 @@ GOLDEN_DIR = os.path.dirname(os.path.abspath(__file__))
 GOLDEN_PATH = os.path.join(GOLDEN_DIR, "golden")
 
 # Bump when golden datasets change.
-DATASET_VERSION = "v0.3"
+# v0.4: canonical `statement` added to every extraction expected_unit so the live
+# (model-graded) extraction scorer can match by semantic equivalence via the judge.
+DATASET_VERSION = "v0.4"
 
 
 @lru_cache(maxsize=None)

@@ -27,13 +27,36 @@ def _extract(content: str) -> list[dict]:
 
 
 def _matches(unit: dict, expected: dict) -> bool:
+    """Deterministic (fixture) match: same type + every golden `term` is a substring
+    of the extracted statement. This is the pipeline-correctness GATE (INT-5)."""
     if unit.get("type") != expected["type"]:
         return False
     stmt = (unit.get("statement") or "").lower()
     return all(t.lower() in stmt for t in expected["terms"])
 
 
-def run(db: Session, split: str | None = "test") -> list[dict]:
+def _matches_live(unit: dict, expected: dict) -> bool:
+    """Model-graded match: same type + the LLM judge rules the extracted statement
+    semantically equivalent to the golden `statement`. Used by extraction_live.py
+    (INT-2: a real measurement, judge-in-the-loop, never substring-gamed)."""
+    from apps.api.evals.judge.judge import equivalent
+
+    if unit.get("type") != expected.get("type"):
+        return False
+    want = expected.get("statement")
+    if not want:  # no canonical statement → fall back to the substring gate
+        return _matches(unit, expected)
+    return bool(equivalent(unit.get("statement") or "", want)["equivalent"])
+
+
+def run(db: Session, split: str | None = "test", live: bool = False) -> list[dict]:
+    """Score extraction against the goldens.
+
+    live=False (default): substring match — the deterministic regression gate.
+    live=True: judge-graded semantic match — the published NLP-quality measurement.
+    Per-case `detail` carries tp/fp/fn so micro precision/recall/F1 aggregate honestly,
+    including false positives the extractor invents (INT-3: precision AND recall)."""
+    match = _matches_live if live else _matches
     results = []
     for case in load_cases("extraction", split):
         try:
@@ -43,29 +66,29 @@ def run(db: Session, split: str | None = "test") -> list[dict]:
                 ok = len(units) == 0
                 results.append({
                     "stage": "extraction", "case_id": case["id"], "tier": case["tier"], "split": case["split"],
-                    "passed": ok, "judge_used": False, "error": None,
+                    "passed": ok, "judge_used": live, "error": None,
                     "detail": {"kind": case.get("kind"), "noise": True, "extracted": len(units), "tp": 0, "fp": len(units), "fn": 0,
                                "prov_ok": 0, "prov_total": 0},
                 })
                 continue
 
-            matched = [e for e in expected if any(_matches(u, e) for u in units)]
+            matched = [e for e in expected if any(match(u, e) for u in units)]
             tp = len(matched)
             fn = len(expected) - tp
-            fp = sum(1 for u in units if not any(_matches(u, e) for e in expected))
+            fp = sum(1 for u in units if not any(match(u, e) for e in expected))
             prov_total = len(units)
             prov_ok = sum(1 for u in units if (u.get("quote_span") or "") in case["content"])
             ok = (fn == 0)
             results.append({
                 "stage": "extraction", "case_id": case["id"], "tier": case["tier"], "split": case["split"],
-                "passed": ok, "judge_used": False, "error": None,
+                "passed": ok, "judge_used": live, "error": None,
                 "detail": {"kind": case.get("kind"), "noise": False, "tp": tp, "fp": fp, "fn": fn,
                            "prov_ok": prov_ok, "prov_total": prov_total},
             })
         except Exception as e:  # noqa: BLE001 - fail closed
             results.append({
                 "stage": "extraction", "case_id": case["id"], "tier": case["tier"], "split": case["split"],
-                "passed": False, "judge_used": False, "error": f"{type(e).__name__}: {e}",
+                "passed": False, "judge_used": live, "error": f"{type(e).__name__}: {e}",
                 "detail": {"kind": case.get("kind"), "tp": 0, "fp": 0, "fn": 99, "prov_ok": 0, "prov_total": 0, "noise": False},
             })
     return results

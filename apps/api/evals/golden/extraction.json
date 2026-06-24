@@ -1,33 +1,35 @@
 {
-  "_meta": {"stage": "extraction", "feeds": "E1", "match": "a unit matches if an extracted KU of the same type contains all `terms` (case-insensitive)"},
+  "_meta": {"stage": "extraction", "feeds": "E1",
+    "match_fixture": "a unit matches if an extracted KU of the same type contains all `terms` (case-insensitive). Used as the deterministic pipeline-correctness gate.",
+    "match_live": "a unit matches if an extracted KU of the same type is judged semantically equivalent to `statement` by the LLM judge (extraction_live.py). `statement` is the canonical meaning, never shown to the extractor (contamination-checked)."},
   "cases": [
     {"id": "ext_refund_policy", "tier": "standard", "split": "test", "kind": "notion_page",
      "content": "Refund Policy\nRefunds within 30 days of purchase are automatically approved.\nRefund requests above $500 require manager sign-off.\nNever refund an order older than 90 days without manager approval.\nNever exceed the original charge amount.\n1. Look up the order by order_id.",
      "expected_units": [
-       {"type": "policy_rule", "terms": ["30 day", "auto"], "must_have_span": "30 days"},
-       {"type": "policy_rule", "terms": ["$500", "manager"], "must_have_span": "$500"},
-       {"type": "policy_rule", "terms": ["never", "90 days"]},
-       {"type": "policy_rule", "terms": ["never exceed", "original"]},
-       {"type": "procedure_step", "terms": ["look up the order"]}
+       {"type": "policy_rule", "terms": ["30 day", "auto"], "must_have_span": "30 days", "statement": "Refunds requested within 30 days of purchase are automatically approved."},
+       {"type": "policy_rule", "terms": ["$500", "manager"], "must_have_span": "$500", "statement": "A refund above $500 requires manager sign-off."},
+       {"type": "policy_rule", "terms": ["never", "90 days"], "statement": "Never refund an order older than 90 days without manager approval."},
+       {"type": "policy_rule", "terms": ["never exceed", "original"], "statement": "Never refund more than the original charge amount."},
+       {"type": "procedure_step", "terms": ["look up the order"], "statement": "Look up the order by its order_id."}
      ], "expected_absent": false},
     {"id": "ext_refund_slack_decision", "tier": "standard", "split": "test", "kind": "slack_message",
      "content": "Going forward, refunds above $500 require manager sign-off. We made an exception today after manager approval.",
      "expected_units": [
-       {"type": "policy_rule", "terms": ["$500", "manager"], "must_have_span": "$500"}
+       {"type": "policy_rule", "terms": ["$500", "manager"], "must_have_span": "$500", "statement": "Refunds above $500 require manager sign-off."}
      ], "expected_absent": false},
     {"id": "ext_pricing_policy", "tier": "standard", "split": "test", "kind": "notion_page",
      "content": "Pricing Exception Policy\nDiscounts up to 15% are automatically approved.\nDiscounts above 20% require manager sign-off.\nNever offer a discount above 40% without VP approval.",
      "expected_units": [
-       {"type": "policy_rule", "terms": ["15%", "auto"]},
-       {"type": "policy_rule", "terms": ["20%", "manager"]},
-       {"type": "policy_rule", "terms": ["never", "40%"]}
+       {"type": "policy_rule", "terms": ["15%", "auto"], "statement": "Discounts of up to 15% are automatically approved."},
+       {"type": "policy_rule", "terms": ["20%", "manager"], "statement": "Discounts above 20% require manager sign-off."},
+       {"type": "policy_rule", "terms": ["never", "40%"], "statement": "Never offer a discount above 40% without VP approval."}
      ], "expected_absent": false},
     {"id": "ext_incident_runbook", "tier": "standard", "split": "test", "kind": "notion_page",
      "content": "Incident Response Runbook\nNever resolve a Sev1 incident without a written post-mortem.\n1. Classify the severity of the incident.\n2. Page the on-call engineer.",
      "expected_units": [
-       {"type": "policy_rule", "terms": ["never", "post-mortem"]},
-       {"type": "procedure_step", "terms": ["classify the severity"]},
-       {"type": "procedure_step", "terms": ["page the on-call"]}
+       {"type": "policy_rule", "terms": ["never", "post-mortem"], "statement": "Never resolve a Sev1 incident without a written post-mortem."},
+       {"type": "procedure_step", "terms": ["classify the severity"], "statement": "Classify the severity of the incident."},
+       {"type": "procedure_step", "terms": ["page the on-call"], "statement": "Page the on-call engineer."}
      ], "expected_absent": false},
     {"id": "ext_noise_coffee", "tier": "standard", "split": "test", "kind": "slack_message",
      "content": "lol the coffee machine is broken again, who do I ping",
@@ -35,54 +37,53 @@
      "expected_absent_reason": "operational chatter, not company knowledge"},
     {"id": "ext_noise_lunch", "tier": "easy", "split": "test", "kind": "slack_message",
      "content": "anyone want to grab lunch at 12",
-     "expected_units": [], "expected_absent": true,
-     "expected_absent_reason": "social chatter"},
+     "expected_units": [], "expected_absent": true, "expected_absent_reason": "social chatter"},
     {"id": "ext_noise_greeting", "tier": "easy", "split": "dev", "kind": "slack_message",
      "content": "good morning team hope everyone had a great weekend",
      "expected_units": [], "expected_absent": true, "expected_absent_reason": "greeting"},
     {"id": "ext_refund_window_only", "tier": "easy", "split": "dev", "kind": "notion_page",
      "content": "Refunds within 30 days of purchase are automatically approved.",
-     "expected_units": [{"type": "policy_rule", "terms": ["30 day", "auto"]}], "expected_absent": false},
+     "expected_units": [{"type": "policy_rule", "terms": ["30 day", "auto"], "statement": "Refunds within 30 days of purchase are automatically approved."}], "expected_absent": false},
     {"id": "ext_guardrail_only", "tier": "easy", "split": "dev", "kind": "notion_page",
      "content": "Never exceed the original charge amount on any refund.",
-     "expected_units": [{"type": "policy_rule", "terms": ["never exceed", "original"]}], "expected_absent": false},
+     "expected_units": [{"type": "policy_rule", "terms": ["never exceed", "original"], "statement": "Never refund more than the original charge amount."}], "expected_absent": false},
     {"id": "ext_pricing_dev", "tier": "standard", "split": "dev", "kind": "notion_page",
      "content": "Discounts above 20% require manager sign-off for any pricing exception.",
-     "expected_units": [{"type": "policy_rule", "terms": ["20%", "manager"]}], "expected_absent": false},
+     "expected_units": [{"type": "policy_rule", "terms": ["20%", "manager"], "statement": "Discounts above 20% require manager sign-off."}], "expected_absent": false},
 
     {"id": "ext_github_postmortem", "tier": "standard", "split": "test", "kind": "github_doc",
      "content": "Postmortem: checkout Sev1 outage\nNever roll out schema changes during an active incident without a backout plan.",
-     "expected_units": [{"type": "policy_rule", "terms": ["never", "schema"], "must_have_span": "schema changes"}], "expected_absent": false},
+     "expected_units": [{"type": "policy_rule", "terms": ["never", "schema"], "must_have_span": "schema changes", "statement": "Never roll out schema changes during an active incident without a backout plan."}], "expected_absent": false},
     {"id": "ext_github_noise_lgtm", "tier": "easy", "split": "test", "kind": "github_comment",
      "content": "+1 lgtm ship it", "expected_units": [], "expected_absent": true, "expected_absent_reason": "PR chatter"},
 
     {"id": "ext_linear_severity", "tier": "standard", "split": "test", "kind": "linear_issue",
      "content": "Sev1 incident: checkout outage. Never downgrade incident severity without incident commander sign-off.",
-     "expected_units": [{"type": "policy_rule", "terms": ["never", "severity"]}], "expected_absent": false},
+     "expected_units": [{"type": "policy_rule", "terms": ["never", "severity"], "statement": "Never downgrade incident severity without incident commander sign-off."}], "expected_absent": false},
     {"id": "ext_linear_noise_bump", "tier": "easy", "split": "dev", "kind": "linear_comment",
      "content": "bumping this, any update?", "expected_units": [], "expected_absent": true, "expected_absent_reason": "ticket chatter"},
 
     {"id": "ext_email_dealdesk", "tier": "standard", "split": "test", "kind": "email",
      "content": "Re: BigCo pricing exception\nNever approve a discount above 50% without CFO sign-off.",
-     "expected_units": [{"type": "policy_rule", "terms": ["never", "50%"]}], "expected_absent": false},
+     "expected_units": [{"type": "policy_rule", "terms": ["never", "50%"], "statement": "Never approve a discount above 50% without CFO sign-off."}], "expected_absent": false},
     {"id": "ext_email_noise_ooo", "tier": "easy", "split": "test", "kind": "email",
      "content": "Out of office until Monday. I will reply when I return.", "expected_units": [], "expected_absent": true, "expected_absent_reason": "auto-reply"},
 
     {"id": "ext_transcript_pricing", "tier": "standard", "split": "test", "kind": "transcript",
      "content": "I told them we'd do 20% off on enterprise pricing. Never promise custom pricing on a call without deal desk confirmation.",
-     "expected_units": [{"type": "policy_rule", "terms": ["never", "pricing"]}], "expected_absent": false},
+     "expected_units": [{"type": "policy_rule", "terms": ["never", "pricing"], "statement": "Never promise custom pricing on a call without deal-desk confirmation."}], "expected_absent": false},
     {"id": "ext_transcript_noise_smalltalk", "tier": "easy", "split": "dev", "kind": "transcript",
      "content": "Yeah how was your weekend? Pretty good thanks, you?", "expected_units": [], "expected_absent": true, "expected_absent_reason": "small talk"},
 
     {"id": "ext_postgres_metric", "tier": "standard", "split": "test", "kind": "db_row",
      "content": "Pricing tier Enterprise is measured as $50 per seat per month.",
-     "expected_units": [{"type": "metric_definition", "terms": ["measured as", "enterprise"]}], "expected_absent": false},
+     "expected_units": [{"type": "metric_definition", "terms": ["measured as", "enterprise"], "statement": "The Enterprise pricing tier is measured as $50 per seat per month."}], "expected_absent": false},
     {"id": "ext_postgres_noise_row", "tier": "easy", "split": "test", "kind": "db_row",
      "content": "user 12 last login 2026-01-01", "expected_units": [], "expected_absent": true, "expected_absent_reason": "operational row, not knowledge"},
 
     {"id": "ext_zendesk_guardrail", "tier": "standard", "split": "test", "kind": "zendesk_ticket",
      "content": "Refund request for order 1234. Never refund a digital goods order after the license key has been activated.",
-     "expected_units": [{"type": "policy_rule", "terms": ["never", "refund"]}], "expected_absent": false},
+     "expected_units": [{"type": "policy_rule", "terms": ["never", "refund"], "statement": "Never refund a digital-goods order after its license key has been activated."}], "expected_absent": false},
     {"id": "ext_zendesk_noise_thanks", "tier": "easy", "split": "dev", "kind": "zendesk_comment",
      "content": "Thanks, that worked!", "expected_units": [], "expected_absent": true, "expected_absent_reason": "resolution chatter"}
   ]

@@ -7,15 +7,23 @@ against Stripe actually asks are: when an agent uses a skill, does the brain rea
 correct decision, does it ever leak a guardrail, and can an agent see something its role
 shouldn't?
 
-**This benchmark is deterministic by design.** The whole system — and the eval harness —
-runs on a deterministic, offline provider (`LLM_PROVIDER=fixture`, the default). No
-external model is required or used. The advantage: the published headline metrics are
-**exact, reproducible, and un-gameable** — they drive the real `GovernedExecutor` /
-`VisibilityFilter` with programmatic pass/fail, so they carry an exact `n`, not a noisy
-model score. We report exactly what we can measure rigorously, and we explicitly do **not**
-publish numbers that would require a model we don't run (see "Not published", below).
+**The benchmark has two parts, by design.** They answer different questions and earn
+trust in different ways, so we keep them separate rather than blending them into one
+hand-wavy score:
 
-## Published scorecard (deterministic, fixture, `test` split, DATASET_VERSION v0.3)
+- **Part 1 — Exact governance (deterministic).** The governance metrics run on a
+  deterministic, offline provider (`LLM_PROVIDER=fixture`, the default). They drive the
+  real `GovernedExecutor` / `VisibilityFilter` with programmatic pass/fail, so they are
+  **exact, reproducible, and un-gameable** — an exact `n`, not a noisy model score. This
+  is the published headline and the CI gate.
+- **Part 2 — Measured NLP (model-graded).** Extraction quality genuinely depends on the
+  model, so we measure it on the **real model** and publish it as `mean ± 95% CI` over
+  N≥5 runs with the model snapshot attached — graded by the LLM judge on **semantic
+  equivalence**, not substring overlap. It is honest (expected below 100%), it is **not**
+  part of the CI gate, and it is reported *next to* the governance number, never folded
+  into it.
+
+## Published scorecard (deterministic, fixture, `test` split, DATASET_VERSION v0.4)
 
 Reproduce with `make eval` (free, offline, ~5s). Every number is exact with a disclosed n;
 re-running is bit-identical.
@@ -68,22 +76,52 @@ rather than hide — at n≈26 the estimate still has real uncertainty. `python 
 apps.api.resolver.calibration` refits it; the params are version-stamped in
 `calibration.json`.
 
-## Not published (would require a model we don't run)
+## Part 2 — Measured NLP quality (model-graded extraction)
 
-Two stages can't be honestly scored without an LLM, so in this fixture-only configuration
-we **do not publish them as accuracy numbers**:
+Extraction is the one stage whose quality genuinely depends on the model, so we measure it
+*on the model* rather than omit it. The harness for this is `apps/api/evals/extraction_live.py`
+(`make eval-extraction-live`). It is separate from the deterministic suite on purpose.
 
-- **Extraction F1 / noise-rejection / provenance.** The fixture extractor is rule-based, so
-  it matches the goldens *by construction* (F1 = 100%). That is a **regression gate on the
-  pipeline's correctness**, not a measure of NLP quality — so we report it as a gate, never
-  as a published accuracy claim. A real extraction-quality number would require running the
-  extractor on a model (an optional path; see appendix) and would honestly score below 100%.
-- **Judge κ.** The semantic-equivalence judge is only needed for model-graded checks, which
-  we don't run here. The fixture judge is a token-overlap proxy (κ is intentionally low on
-  numeric near-misses) — a *flag*, not a published number.
+**Method (integrity-first):**
 
-Publishing a deterministic 100% governance number next to an honestly-omitted extraction
-number is the point: we claim only what we can prove.
+1. **Trust the judge first.** Extraction is graded by an LLM judge for *semantic
+   equivalence* against a canonical `statement` per golden unit (never substring overlap —
+   that's the deterministic gate's job). Before any extraction number is computed, the judge
+   is validated against a 32-pair human-labeled set (`validate_judge.py`) including numeric
+   near-misses (20% vs 25%, $500 vs $5000, 30 vs 60 days, flipped comparators, added
+   negation) → **Cohen's κ**. **κ < 0.7 ⇒ the whole measurement is stamped low-trust and is
+   not published.** A number graded by an untrusted judge is not a number.
+2. **Precision *and* recall.** We report micro precision, recall, and F1 — false positives
+   the extractor invents count against precision; missed units count against recall. F1
+   alone hides both.
+3. **N≥5 runs, `mean ± 95% CI`,** with the model id + snapshot stamped on the result. A live
+   point estimate without its CI and snapshot is not reportable.
+4. **Per source kind.** F1 + noise rejection broken out across all 8 connector kinds, so a
+   regression in one source isn't averaged away.
+5. **Cost + provenance.** Real token spend is reported; provenance accuracy = fraction of
+   extracted spans found verbatim in the source.
+
+```bash
+LLM_PROVIDER=anthropic ANTHROPIC_API_KEY=sk-... \
+    python -m apps.api.evals.extraction_live --n 5 --split test
+# or: make eval-extraction-live
+```
+
+The published result lands in `apps/api/evals/published/extraction_live.json` (committed
+next to this file, attributable by commit + dataset + model snapshot) and surfaces in the
+console under **"NLP quality — measured"**, beside — never blended into — the governance
+tiles.
+
+> **Status: pending a real run.** This sandbox has no model key, and the harness **refuses
+> to fabricate a number** without one (it exits non-zero rather than emit a fixture value as
+> if it were measured). The deterministic gate above is fully published; the model-graded
+> number publishes the moment the command above runs against a key. The fixture extractor
+> scores F1 = 100% *by construction* — that is the pipeline regression gate (Part 1's
+> extraction row), explicitly **not** an NLP-quality claim.
+
+Publishing a deterministic, exact governance number next to an honestly-measured (or
+honestly-pending) extraction number — and never conflating the two — is the whole point: we
+claim only what we can prove, and we prove the rest on a real model.
 
 ## Statistical rigor (§7)
 
@@ -124,8 +162,10 @@ python -m apps.api.resolver.calibration   # refit the resolver calibrator on the
 - **Dataset sizes**, though grown (GAR 26, SEC 31, routing 45), are still small; n is always
   on the card so a reader can judge the strength of each claim.
 
-## Appendix — optional model-graded extraction (not the published config)
+## Appendix — the model seam
 
-The LLM sits behind one interface (`apps/api/llm/base.py`); a model provider can be added
-in one file if you ever want a model-graded extraction/κ number. That path is **not** part
-of the published deterministic benchmark and is not required to run anything in this repo.
+The LLM sits behind one interface (`apps/api/llm/base.py`); the real provider is
+`anthropic_client.py`, selected by `LLM_PROVIDER=anthropic`. The deterministic Part 1
+benchmark and everything else in the repo run on the fixture provider with **no key and no
+network**. Only Part 2 (model-graded extraction, above) needs the model — and it is
+cost-guarded, kept out of the CI gate, and refuses to emit a number without a real run.

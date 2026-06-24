@@ -23,6 +23,13 @@ eval-ci:
 calibrate:
 	python -m apps.api.resolver.calibration
 
+# Measured NLP quality on the REAL model (judge-graded extraction F1, N≥5, mean±CI).
+# Costs money + needs network + a key — DELIBERATELY NOT in eval-ci (the deterministic
+# suite stays the gate). Refuses to fabricate a number without a real provider.
+eval-extraction-live:
+	@test -n "$$ANTHROPIC_API_KEY" || (echo "set ANTHROPIC_API_KEY (and LLM_PROVIDER=anthropic) first" && exit 2)
+	LLM_PROVIDER=anthropic python -m apps.api.evals.extraction_live --n 5 --split test
+
 # REST API (console backend + non-MCP agents).
 api:
 	uvicorn apps.api.main:app --reload --port 8000

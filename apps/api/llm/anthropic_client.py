@@ -26,6 +26,14 @@ def _cost(model: str, usage) -> float:
 
 
 class AnthropicClient(LLMClient):
+    # Process-wide usage accumulator. get_llm() makes a fresh client per call, so a
+    # class-level total lets the live eval report real token spend across the run.
+    TOTAL = Usage()
+
+    @classmethod
+    def reset_usage(cls) -> None:
+        cls.TOTAL = Usage()
+
     def __init__(self) -> None:
         from anthropic import Anthropic
 
@@ -52,6 +60,7 @@ class AnthropicClient(LLMClient):
                     calls=1,
                 )
                 u.cost_usd = _cost(model, u)
+                AnthropicClient.TOTAL.add(u)
                 return text, u
             except Exception as e:  # noqa: BLE001 - retry transient errors
                 last_err = e

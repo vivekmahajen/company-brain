@@ -144,14 +144,21 @@ These drive the *real* `GovernedExecutor` / `VisibilityFilter`, so a green CBE i
 property of the shipped system. The resolver's confidence is Platt-calibrated
 (**ECE 0.68 → 0.077**, fit on a held-out split). CI hard-fails on `GAR/PER < 100%`
 or `determinism < 1.0`, and the harness's own sensitivity is tested (inject a
-guardrail leak → CBE turns red). Extraction F1 and judge κ are **deliberately not
-published** — they'd require a model this config doesn't run; full rationale +
-numbers in **[BENCHMARK.md](BENCHMARK.md)**.
+guardrail leak → CBE turns red).
+
+The benchmark has **two parts** (full detail in **[BENCHMARK.md](BENCHMARK.md)**):
+Part 1 is the exact, deterministic governance number above (the CI gate). Part 2 is
+**measured NLP quality** — extraction F1 graded on the **real model** by the LLM judge
+on semantic equivalence (not substring), published as `mean ± 95% CI` over N≥5 runs
+with the model snapshot, validated by Cohen's κ first (κ<0.7 ⇒ low-trust, unpublished).
+It is cost-guarded, kept **out** of the CI gate, and reported *beside* — never blended
+into — the governance number. The harness refuses to fabricate it without a real key.
 
 ```bash
-make eval        # the published deterministic scorecard (offline, free)
-make eval-ci     # CI gate (nonzero exit on any failing threshold)
-make calibrate   # refit the resolver confidence calibrator
+make eval                  # Part 1: deterministic governance scorecard (offline, free)
+make eval-ci               # CI gate (nonzero exit on any failing threshold)
+make calibrate             # refit the resolver confidence calibrator
+make eval-extraction-live  # Part 2: model-graded extraction F1 (needs a key; not a gate)
 ```
 
 ## Deploy

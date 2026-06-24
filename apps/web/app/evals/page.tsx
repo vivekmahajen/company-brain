@@ -11,9 +11,11 @@ function pct(m: any) {
 export default async function EvalsPage() {
   let sc: any = null;
   let runs: any[] = [];
+  let live: any = null;
   try {
     sc = await api.evalsLatest();
     runs = await api.evalsRuns();
+    live = await api.evalsExtractionLive().catch(() => null);
   } catch {
     return <div className="text-amber-300">API unreachable.</div>;
   }
@@ -64,6 +66,8 @@ export default async function EvalsPage() {
         <Tile label="Permission Enforcement (PER)" value={pct(m.PER)} good={m.PER?.mean >= 1} sub={`deterministic · n=${ns.PER ?? "?"} · 100% req`} />
         <Tile label="Skill-Execution (SEC)" value={pct(m.SEC)} good={m.SEC?.mean >= 0.9} sub={`deterministic · n=${ns.SEC ?? "?"} · ≥90%`} />
       </div>
+
+      <NlpQualityPanel live={live} />
 
       {cal && (
         <section className="rounded-lg border border-neutral-800 p-4">
@@ -132,6 +136,49 @@ export default async function EvalsPage() {
         </div>
       </section>
     </div>
+  );
+}
+
+function lpct(m: any) {
+  if (!m) return "—";
+  const v = (m.mean * 100).toFixed(1) + "%";
+  return m.n >= 2 && m.ci95 > 0 ? `${v} ±${(m.ci95 * 100).toFixed(1)}` : v;
+}
+
+function NlpQualityPanel({ live }: { live: any }) {
+  return (
+    <section className="rounded-lg border border-neutral-800 p-4">
+      <div className="flex items-baseline justify-between">
+        <h2 className="text-lg font-medium">NLP quality — measured (model-graded)</h2>
+        <span className="text-xs text-neutral-500">extraction F1 · judge-matched · mean ± 95% CI</span>
+      </div>
+      {!live || !live.available ? (
+        <p className="mt-2 text-sm text-neutral-400">
+          Not yet measured. This is the honest, model-dependent number (kept separate from the
+          deterministic governance metrics above). Run{" "}
+          <code>make eval-extraction-live</code> with a real model + key to publish it.
+        </p>
+      ) : (
+        <>
+          <p className="mt-1 text-xs text-neutral-500">
+            <span className={`mr-2 rounded px-1.5 py-0.5 ${live.published ? "bg-emerald-900/50 text-emerald-300" : "bg-amber-900/40 text-amber-300"}`}>
+              {live.published ? "published" : "not published"}
+            </span>
+            {live.model} ({live.model_snapshot}) · commit {live.commit_sha} · {live.split} split · {live.n_runs} runs ·
+            judge κ={live.judge?.kappa}{live.judge?.low_trust ? " ⚠ low-trust" : ""}
+          </p>
+          <div className="mt-3 grid grid-cols-3 gap-4">
+            <Tile label="Extraction F1" value={lpct(live.metrics?.f1)} good={(live.metrics?.f1?.mean ?? 0) >= 0.7} sub={`precision ${lpct(live.metrics?.precision)} · recall ${lpct(live.metrics?.recall)}`} />
+            <Tile label="Noise rejection" value={lpct(live.metrics?.noise_rejection)} good={(live.metrics?.noise_rejection?.mean ?? 0) >= 0.9} sub={`${live.counts?.noise_cases ?? "?"} noise cases`} />
+            <Tile label="Provenance" value={lpct(live.metrics?.provenance_accuracy)} good={(live.metrics?.provenance_accuracy?.mean ?? 0) >= 0.9} sub={`spans verified in source`} />
+          </div>
+          <p className="mt-2 text-xs text-neutral-500">
+            Cost ${live.cost?.usd} · {live.cost?.calls} model calls. Matched by semantic equivalence
+            (the LLM judge), not substring — expected below the fixture gate&apos;s 100%.
+          </p>
+        </>
+      )}
+    </section>
   );
 }
 

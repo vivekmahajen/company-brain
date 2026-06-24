@@ -63,6 +63,30 @@ def single_run_metrics(results: list[dict]) -> dict:
     return m
 
 
+def extraction_micro(results: list[dict]) -> dict:
+    """Micro precision / recall / F1 over the extraction results, plus noise
+    rejection and provenance — the full quality picture for one run (INT-3).
+    Shared by the deterministic gate and the live (model-graded) measurement."""
+    ext = [r for r in results if r["stage"] == "extraction"]
+    know = [r for r in ext if not r["detail"].get("noise")]
+    noise = [r for r in ext if r["detail"].get("noise")]
+    tp = sum(r["detail"].get("tp", 0) for r in know)
+    fp = sum(r["detail"].get("fp", 0) for r in know)
+    fn = sum(r["detail"].get("fn", 0) for r in know)
+    prec = _f(tp, tp + fp)
+    rec = _f(tp, tp + fn)
+    prov_ok = sum(r["detail"].get("prov_ok", 0) for r in ext)
+    prov_total = sum(r["detail"].get("prov_total", 0) for r in ext)
+    return {
+        "precision": prec, "recall": rec, "f1": _f(2 * prec * rec, prec + rec),
+        "tp": tp, "fp": fp, "fn": fn,
+        "noise_rejection": _f(sum(1 for r in noise if r["passed"]), len(noise)),
+        "noise_n": len(noise),
+        "provenance_accuracy": _f(prov_ok, prov_total),
+        "knowledge_cases": len(know),
+    }
+
+
 def extraction_by_kind(results: list[dict]) -> dict:
     """Per-source-kind extraction F1 + noise rejection (so a regression in one
     source type is visible, not averaged away)."""

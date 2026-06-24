@@ -247,6 +247,24 @@ def evals_runs(db: Session = Depends(get_session)):
     ]
 
 
+@router.get("/evals/extraction-live")
+def evals_extraction_live():
+    """The published model-graded extraction measurement (mean±CI over N runs),
+    if one has been committed. Produced by `make eval-extraction-live`; absent
+    until a real run is committed, so the console can show 'not yet measured'."""
+    import json
+    import os
+
+    path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                        "evals", "published", "extraction_live.json")
+    if not os.path.exists(path):
+        return {"available": False}
+    with open(path, encoding="utf-8") as f:
+        data = json.load(f)
+    data["available"] = True
+    return data
+
+
 @router.get("/evals/runs/{run_id}/failures")
 def evals_failures(run_id: str, db: Session = Depends(get_session)):
     from apps.api.models.serving import EvalResult
