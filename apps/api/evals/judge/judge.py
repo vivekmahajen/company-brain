@@ -29,9 +29,14 @@ def _tokens(s: str) -> set[str]:
 
 
 def _fixture_equivalent(a: str, b: str) -> bool:
-    # Deterministic proxy: stemmed-token Jaccard. Calibrated against the human
-    # label set (κ≈0.75). It cannot catch zero-overlap paraphrases — only the
-    # real LLM judge (LLM_PROVIDER=anthropic) can; that gap is reported, not hidden.
+    # Deterministic stemmed-token Jaccard. This is a WIRING PLACEHOLDER, not a
+    # trusted judge: on the grown 32-pair human set it scores κ≈-0.06 (worse than
+    # chance), because token overlap cannot catch the meaning-changing near-misses
+    # the rubric cares about — a flipped comparator, an added negation, or 20% vs
+    # 25% share almost all their tokens. That is exactly why the offline path is
+    # blocked from publishing any number. Only the real model judge
+    # (LLM_PROVIDER=anthropic), validated to κ≥0.7 in validate_judge.py, is trusted
+    # to grade a published extraction score.
     ta, tb = _tokens(a), _tokens(b)
     if not ta or not tb:
         return False
