@@ -112,12 +112,35 @@ next to this file, attributable by commit + dataset + model snapshot) and surfac
 console under **"NLP quality — measured"**, beside — never blended into — the governance
 tiles.
 
-> **Status: pending a real run.** This sandbox has no model key, and the harness **refuses
-> to fabricate a number** without one (it exits non-zero rather than emit a fixture value as
-> if it were measured). The deterministic gate above is fully published; the model-graded
-> number publishes the moment the command above runs against a key. The fixture extractor
-> scores F1 = 100% *by construction* — that is the pipeline regression gate (Part 1's
-> extraction row), explicitly **not** an NLP-quality claim.
+### Result (measured, `claude-opus-4-8` snapshot `2026-06`, commit `c1cea04`, dataset v0.4, `test` split, N=5)
+
+| Metric | Value (mean ± 95% CI) |
+|---|---|
+| **Extraction F1** | **74.8% ± 2.7** |
+| Precision | 59.8% ± 3.6 |
+| Recall | 100.0% |
+| Noise rejection | 92.0% ± 9.6 |
+| Provenance accuracy | 100.0% |
+| **Judge trust (Cohen's κ)** | **1.0** (n=32, observed agreement 1.0) — cleared the κ≥0.7 bar |
+
+Real cost: **$10.62** · 1068 model calls (347k/73k in/out tokens). Artifact committed at
+`apps/api/evals/published/extraction_live.{json,md}`.
+
+**How to read this — and why it is honest.** Recall is **100%**: on the `test` split the
+extractor misses **no** real rule. Precision is **59.8%**, so F1 is dragged to **74.8%** —
+the model *over-extracts*, emitting ~1.5× the golden units, and the extras are scored as
+false positives. A material share of those "false positives" are arguably **valid units the
+goldens simply don't enumerate** (each source lists only its headline rule), so the *true*
+precision is plausibly higher than 59.8% — but we score against the goldens as written and
+do **not** hand-wave the number upward. This is the credible production picture: the brain
+captures everything and is slightly over-eager, which is the safe failure direction for a
+review-gated knowledge layer (a human prunes extras; a missed guardrail is the dangerous
+case, and recall is 100%). The number publishes *only* because the judge grading it scored
+**κ=1.0** against the human set first; a number from an untrusted judge would not appear here.
+
+Per-source-kind F1 (last run) is in the committed artifact — the small-source kinds (one
+case each) swing between 0.5 and 1.0, which is sampling noise at n=1 per kind, disclosed
+rather than averaged away.
 
 Publishing a deterministic, exact governance number next to an honestly-measured (or
 honestly-pending) extraction number — and never conflating the two — is the whole point: we

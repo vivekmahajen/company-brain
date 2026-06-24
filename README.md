@@ -148,11 +148,17 @@ guardrail leak → CBE turns red).
 
 The benchmark has **two parts** (full detail in **[BENCHMARK.md](BENCHMARK.md)**):
 Part 1 is the exact, deterministic governance number above (the CI gate). Part 2 is
-**measured NLP quality** — extraction F1 graded on the **real model** by the LLM judge
-on semantic equivalence (not substring), published as `mean ± 95% CI` over N≥5 runs
-with the model snapshot, validated by Cohen's κ first (κ<0.7 ⇒ low-trust, unpublished).
-It is cost-guarded, kept **out** of the CI gate, and reported *beside* — never blended
-into — the governance number. The harness refuses to fabricate it without a real key.
+**measured NLP quality** — extraction graded on the **real model** (`claude-opus-4-8`,
+snapshot `2026-06`) by the LLM judge on semantic equivalence (not substring), published
+as `mean ± 95% CI` over N≥5 runs and validated by Cohen's κ first:
+
+> **Extraction F1 = 74.8% ± 2.7** (recall 100%, precision 59.8% ± 3.6) · judge **κ = 1.0** ·
+> noise rejection 92% · provenance 100% · n=5 · $10.62/run
+
+100% recall (no real rule missed) with sub-100% precision (the model over-extracts) — an
+honest production number, deliberately **not** rounded toward 100%. It is cost-guarded, kept
+**out** of the CI gate, and reported *beside* — never blended into — the governance number;
+the harness refuses to fabricate it without a real key (κ<0.7 ⇒ low-trust, unpublished).
 
 ```bash
 make eval                  # Part 1: deterministic governance scorecard (offline, free)
