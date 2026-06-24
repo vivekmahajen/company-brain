@@ -1,0 +1,116 @@
+{
+  "kind": "extraction_live",
+  "published": true,
+  "provider": "anthropic",
+  "model": "claude-opus-4-8",
+  "model_snapshot": "2026-06",
+  "commit_sha": "c1cea04",
+  "dataset_version": "v0.4",
+  "split": "test",
+  "n_runs": 5,
+  "judge": {
+    "kappa": 1.0,
+    "observed_agreement": 1.0,
+    "n": 32,
+    "low_trust": false
+  },
+  "metrics": {
+    "precision": {
+      "mean": 0.5981,
+      "ci95": 0.0356,
+      "n": 5,
+      "min": 0.5625,
+      "max": 0.6667
+    },
+    "recall": {
+      "mean": 1.0,
+      "ci95": 0.0,
+      "n": 5,
+      "min": 1.0,
+      "max": 1.0
+    },
+    "f1": {
+      "mean": 0.7479,
+      "ci95": 0.0272,
+      "n": 5,
+      "min": 0.72,
+      "max": 0.8
+    },
+    "noise_rejection": {
+      "mean": 0.92,
+      "ci95": 0.096,
+      "n": 5,
+      "min": 0.8,
+      "max": 1.0
+    },
+    "provenance_accuracy": {
+      "mean": 1.0,
+      "ci95": 0.0,
+      "n": 5,
+      "min": 1.0,
+      "max": 1.0
+    }
+  },
+  "by_kind": {
+    "db_row": {
+      "f1": 1.0,
+      "noise_rejection": 1.0,
+      "cases": 2
+    },
+    "email": {
+      "f1": 1.0,
+      "noise_rejection": 1.0,
+      "cases": 2
+    },
+    "github_comment": {
+      "f1": null,
+      "noise_rejection": 1.0,
+      "cases": 1
+    },
+    "github_doc": {
+      "f1": 0.667,
+      "noise_rejection": null,
+      "cases": 1
+    },
+    "linear_issue": {
+      "f1": 0.667,
+      "noise_rejection": null,
+      "cases": 1
+    },
+    "notion_page": {
+      "f1": 0.88,
+      "noise_rejection": null,
+      "cases": 3
+    },
+    "slack_message": {
+      "f1": 0.667,
+      "noise_rejection": 1.0,
+      "cases": 3
+    },
+    "transcript": {
+      "f1": 0.5,
+      "noise_rejection": null,
+      "cases": 1
+    },
+    "zendesk_ticket": {
+      "f1": 0.667,
+      "noise_rejection": null,
+      "cases": 1
+    }
+  },
+  "counts": {
+    "knowledge_cases": 10,
+    "noise_cases": 5,
+    "tp_last": 18,
+    "fp_last": 9,
+    "fn_last": 0
+  },
+  "cost": {
+    "usd": 10.6206,
+    "calls": 1068,
+    "input_tokens": 347290,
+    "output_tokens": 73336
+  },
+  "timestamp": "2026-06-24T03:09:32.400971+00:00",
+  "note": "Model-graded extraction quality, judge-matched (semantic equivalence). Honest production number \u2014 expected below the fixture gate's 100%."
+}
