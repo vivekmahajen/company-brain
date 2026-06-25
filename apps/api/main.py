@@ -9,9 +9,51 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from apps.api.config import get_settings
 from apps.api.models.db import init_db
-from apps.api.routers import approvals, brain
+from apps.api.routers import approvals, brain, orgs
 
 logger = logging.getLogger("company_brain")
+
+
+class TenantMiddleware:
+    """Pure-ASGI middleware that resolves the request's tenant (org) and binds it
+    to a contextvar for the lifetime of the request. Pure-ASGI (not BaseHTTPMiddleware)
+    so the contextvar reliably reaches the endpoint. Fails closed in strict mode."""
+
+    def __init__(self, app) -> None:
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http" or scope.get("method") == "OPTIONS":
+            await self.app(scope, receive, send)
+            return
+
+        from apps.api.auth.tenant import current_org_id, resolve_org_id
+        from apps.api.models.db import SessionLocal
+
+        headers = {k.decode("latin-1").lower(): v.decode("latin-1") for k, v in scope.get("headers", [])}
+        db = SessionLocal()
+        try:
+            org_id, _how, ok = resolve_org_id(
+                db,
+                authorization=headers.get("authorization"),
+                x_org_id=headers.get("x-org-id"),
+                path=scope.get("path", ""),
+            )
+        finally:
+            db.close()
+
+        if not ok:
+            await send({"type": "http.response.start", "status": 401,
+                        "headers": [(b"content-type", b"application/json")]})
+            await send({"type": "http.response.body",
+                        "body": b'{"error":"tenant unresolved: send a valid token or X-Org-Id"}'})
+            return
+
+        token = current_org_id.set(org_id)
+        try:
+            await self.app(scope, receive, send)
+        finally:
+            current_org_id.reset(token)
 
 
 def _seed_if_empty() -> None:
@@ -60,6 +102,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+# Tenant resolution wraps the routers so every endpoint sees the resolved org.
+# It's added last (→ outermost), so it runs first; CORS preflight (OPTIONS) is
+# passed straight through inside the middleware so cross-origin still works.
+app.add_middleware(TenantMiddleware)
+app.include_router(orgs.router, prefix="/api")
 app.include_router(brain.router, prefix="/api")
 app.include_router(approvals.router, prefix="/api")
 

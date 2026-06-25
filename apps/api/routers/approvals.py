@@ -11,7 +11,6 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from apps.api.auth.principals import resolve_principal
-from apps.api.config import get_settings
 from apps.api.models.db import get_session
 from apps.api.services.serving import decide_approval, get_approval, list_pending_approvals
 
@@ -19,7 +18,9 @@ router = APIRouter()
 
 
 def _org() -> str:
-    return get_settings().default_org_id
+    from apps.api.auth.tenant import current_org
+
+    return current_org()
 
 
 def _approver(db: Session, authorization: str | None):

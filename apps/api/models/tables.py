@@ -34,6 +34,21 @@ def _now() -> datetime:
 
 
 # --------------------------------------------------------------------------
+# WHO the knowledge belongs to (tenant registry)
+# --------------------------------------------------------------------------
+class Org(Base):
+    """A tenant. Every other table is scoped by `org_id` (a string); this is the
+    registry of those ids so we can create/list tenants and validate an inbound
+    org. The default demo org is `Settings.default_org_id`."""
+    __tablename__ = "org"
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=_uuid)
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    slug: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
+    status: Mapped[str] = mapped_column(String, default="active")  # active|suspended
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
+# --------------------------------------------------------------------------
 # WHERE knowledge comes from
 # --------------------------------------------------------------------------
 class Source(Base):

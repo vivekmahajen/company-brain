@@ -6,7 +6,6 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from apps.api.config import get_settings
 from apps.api.freshness.engine import open_signals
 from apps.api.models.db import get_session
 from apps.api.models.tables import (
@@ -29,7 +28,11 @@ router = APIRouter()
 
 
 def _org() -> str:
-    return get_settings().default_org_id
+    # Per-request tenant, resolved by TenantMiddleware from the bearer token /
+    # X-Org-Id header (falls back to the default org in non-strict mode).
+    from apps.api.auth.tenant import current_org
+
+    return current_org()
 
 
 # --- pipeline / sources ----------------------------------------------------
