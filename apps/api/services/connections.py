@@ -38,8 +38,18 @@ CONNECTOR_CATALOG = {
 
 
 def list_connectors() -> list[dict]:
-    return [{"kind": k, **CONNECTOR_CATALOG.get(k, {"auth": "none", "secret_fields": []})}
-            for k in sorted(REGISTRY)]
+    """Connector kinds + how each authenticates. For OAuth kinds, report whether an
+    OAuth app is configured so the UI can show 'Connect' vs. 'Paste a token'."""
+    from apps.api.connectors import oauth
+
+    out = []
+    for k in sorted(REGISTRY):
+        meta = {"kind": k, **CONNECTOR_CATALOG.get(k, {"auth": "none", "secret_fields": []})}
+        if oauth.supports_oauth(k):
+            meta["oauth_configured"] = oauth.is_configured(k)
+            meta["authorize_path"] = f"/api/connect/{k}/authorize"
+        out.append(meta)
+    return out
 
 
 # --- credential storage (vault-backed) ------------------------------------

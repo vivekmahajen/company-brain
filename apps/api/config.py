@@ -78,6 +78,12 @@ class Settings(BaseSettings):
     # Key material for the connector-credential vault. Set in production; a
     # missing value falls back to a non-secret dev key with a loud warning.
     secrets_key: str | None = Field(default=None)
+    # Public base URL of this API for OAuth redirects (e.g. https://api.acme.com).
+    # Per-provider client id/secret are read from env: OAUTH_<KIND>_CLIENT_ID/SECRET.
+    oauth_redirect_base: str | None = Field(default=None)
+    # Where to send the user after a successful OAuth connect (the console). When
+    # set, the callback 302-redirects here; otherwise it returns JSON.
+    oauth_success_redirect: str | None = Field(default=None)
 
     # --- Paths ------------------------------------------------------------
     skills_dir: str = Field(default="skills")
