@@ -66,16 +66,25 @@ def seed_access(db: Session, org_id: str | None = None) -> None:
 
     # Mirror source-native ACLs (re-sync each run, VIS-7).
     for src in db.scalars(select(Source).where(Source.org_id == org_id)).all():
-        try:
-            acl_groups = get_connector(src.kind, src.config_jsonb).pull_acls().get("groups", [])
-        except Exception:  # noqa: BLE001 - unknown connector ⇒ default-deny
-            acl_groups = []
-        for gname in acl_groups:
-            gid = _ensure_group(db, org_id, gname).id
-            exists = db.scalar(select(SourceACL).where(
-                SourceACL.org_id == org_id, SourceACL.source_id == src.id,
-                SourceACL.subject_id == gid, SourceACL.origin == "mirror"))
-            if not exists:
-                db.add(SourceACL(org_id=org_id, source_id=src.id, subject_id=gid,
-                                 subject_kind="group", access="allow", origin="mirror"))
+        mirror_source_acls(db, org_id, src, src.config_jsonb)
     db.commit()
+
+
+def mirror_source_acls(db: Session, org_id: str, src: Source, config: dict | None = None) -> list[str]:
+    """Mirror one source's native audience (connector.pull_acls) into SourceACL.
+    `config` may include vault credentials so a *live* connector can report its real
+    audience (e.g. a private repo → eng-team). Idempotent. Returns the group names."""
+    try:
+        acl_groups = get_connector(src.kind, config if config is not None else src.config_jsonb).pull_acls().get("groups", [])
+    except Exception:  # noqa: BLE001 - unknown/unreachable connector ⇒ default-deny
+        acl_groups = []
+    for gname in acl_groups:
+        gid = _ensure_group(db, org_id, gname).id
+        exists = db.scalar(select(SourceACL).where(
+            SourceACL.org_id == org_id, SourceACL.source_id == src.id,
+            SourceACL.subject_id == gid, SourceACL.origin == "mirror"))
+        if not exists:
+            db.add(SourceACL(org_id=org_id, source_id=src.id, subject_id=gid,
+                             subject_kind="group", access="allow", origin="mirror"))
+    db.flush()
+    return acl_groups

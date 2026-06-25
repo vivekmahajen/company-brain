@@ -73,6 +73,16 @@ def load_source_secret(db: Session, org_id: str, source_id: str) -> dict | None:
     return get_vault().decrypt(row.ciphertext)
 
 
+def merged_source_config(db: Session, org_id: str, source: Source) -> dict:
+    """Source config_jsonb + decrypted vault credentials. Used to build a connector
+    that can actually talk to a live provider; the merge is in-memory only."""
+    cfg = dict(source.config_jsonb or {})
+    secrets = load_source_secret(db, org_id, source.id)
+    if secrets:
+        cfg.update(secrets)
+    return cfg
+
+
 def _has_secret(db: Session, org_id: str, source_id: str) -> bool:
     return db.scalar(select(SourceSecret.id).where(
         SourceSecret.org_id == org_id, SourceSecret.source_id == source_id)) is not None
@@ -114,6 +124,14 @@ def sync_tenant_source(db: Session, org_id: str, source_id: str) -> dict:
     if not src:
         return {"error": "not found"}  # 404 at the router; no cross-tenant leak
     result = sync_source(db, src, org_id=org_id)
+    # Mirror the source's native ACLs (e.g. private repo → eng-team) so a runtime-
+    # connected source's data is governed by its real audience, not default-deny.
+    try:
+        from apps.api.access.seed import mirror_source_acls
+
+        mirror_source_acls(db, org_id, src, merged_source_config(db, org_id, src))
+    except Exception:  # noqa: BLE001 - ACL mirror failure must not fail the sync
+        pass
     db.commit()
     return result
 

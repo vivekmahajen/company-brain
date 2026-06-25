@@ -29,11 +29,9 @@ def sync_source(db: Session, source: Source, *, org_id: str | None = None) -> di
     org_id = org_id or source.org_id
     config = dict(source.config_jsonb or {})
     try:
-        from apps.api.services.connections import load_source_secret
+        from apps.api.services.connections import merged_source_config
 
-        secrets = load_source_secret(db, org_id, source.id)
-        if secrets:
-            config = {**config, **secrets}
+        config = merged_source_config(db, org_id, source)
     except Exception:  # noqa: BLE001 - a vault miss must not break fixture sync
         pass
     connector = get_connector(source.kind, config)
