@@ -74,6 +74,11 @@ class Settings(BaseSettings):
     # Skill TTL (days) for time-based staleness (M6).
     skill_ttl_days: int = Field(default=30)
 
+    # --- Secrets / credential vault (Phase 2) -----------------------------
+    # Key material for the connector-credential vault. Set in production; a
+    # missing value falls back to a non-secret dev key with a loud warning.
+    secrets_key: str | None = Field(default=None)
+
     # --- Paths ------------------------------------------------------------
     skills_dir: str = Field(default="skills")
     fixtures_dir: str = Field(default="fixtures")

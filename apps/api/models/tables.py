@@ -62,6 +62,19 @@ class Source(Base):
     last_synced_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
+class SourceSecret(Base):
+    """Encrypted connector credentials for a source (Phase 2). The ciphertext is
+    produced by the vault; plaintext never touches the DB, logs, or config_jsonb."""
+    __tablename__ = "source_secret"
+    __table_args__ = (UniqueConstraint("org_id", "source_id", name="uq_source_secret"),)
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(String, index=True, nullable=False)
+    source_id: Mapped[str] = mapped_column(ForeignKey("source.id"), nullable=False)
+    ciphertext: Mapped[str] = mapped_column(Text, nullable=False)
+    backend: Mapped[str] = mapped_column(String, nullable=False)  # fernet|dev-hmac|...
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
 class Artifact(Base):
     __tablename__ = "artifact"
     __table_args__ = (

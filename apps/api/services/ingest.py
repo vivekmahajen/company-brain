@@ -22,9 +22,21 @@ def ensure_source(db: Session, *, org_id: str, kind: str, name: str, config: dic
 
 
 def sync_source(db: Session, source: Source, *, org_id: str | None = None) -> dict:
-    """Pull from the connector and insert only new artifacts (idempotent)."""
+    """Pull from the connector and insert only new artifacts (idempotent).
+
+    Credentials (if the source has any) are pulled from the vault and merged into
+    the connector config at call time — they live encrypted, never in config_jsonb."""
     org_id = org_id or source.org_id
-    connector = get_connector(source.kind, source.config_jsonb)
+    config = dict(source.config_jsonb or {})
+    try:
+        from apps.api.services.connections import load_source_secret
+
+        secrets = load_source_secret(db, org_id, source.id)
+        if secrets:
+            config = {**config, **secrets}
+    except Exception:  # noqa: BLE001 - a vault miss must not break fixture sync
+        pass
+    connector = get_connector(source.kind, config)
     artifacts = connector.pull(since=None)  # full pull; dedupe below makes it idempotent
 
     inserted = 0
