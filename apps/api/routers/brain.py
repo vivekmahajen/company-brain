@@ -233,15 +233,22 @@ def health_db():
 
     from apps.api.models.db import engine
 
+    import os
+
     url = str(engine.url)
     dialect = engine.dialect.name  # 'sqlite' | 'postgresql'
     host = urlsplit(url.replace("+psycopg", "").replace("+pysqlite", "")).hostname
     persistent = dialect == "postgresql"
+    # Does the *process* even see a DATABASE_URL env var? (scheme only, never the value.)
+    env_val = os.environ.get("DATABASE_URL")
+    env_scheme = (env_val.split("://", 1)[0] if env_val and "://" in env_val else
+                  ("unresolved" if env_val else "unset"))
     return {
         "backend": "postgres" if persistent else dialect,
         "dialect": dialect,
         "persistent": persistent,
         "host": host,
+        "database_url_env": env_scheme,  # 'postgresql' | 'sqlite' | 'unset' | 'unresolved'
         "warning": None if persistent else
         "SQLite is ephemeral on Railway — set DATABASE_URL on the API service to your Postgres to persist data across deploys.",
     }
