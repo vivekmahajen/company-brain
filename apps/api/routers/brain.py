@@ -224,6 +224,29 @@ def knowledge_add(body: AddKnowledgeBody, db: Session = Depends(get_session)):
     return add_text_knowledge(db, _org(), text=body.text, source_name=body.source_name)
 
 
+@router.get("/health/db")
+def health_db():
+    """Which database is the running app actually using? Confirms persistence at a
+    glance: 'sqlite' (ephemeral on Railway — wiped every redeploy) vs 'postgres'
+    (persistent). Credentials are never returned."""
+    from urllib.parse import urlsplit
+
+    from apps.api.models.db import engine
+
+    url = str(engine.url)
+    dialect = engine.dialect.name  # 'sqlite' | 'postgresql'
+    host = urlsplit(url.replace("+psycopg", "").replace("+pysqlite", "")).hostname
+    persistent = dialect == "postgresql"
+    return {
+        "backend": "postgres" if persistent else dialect,
+        "dialect": dialect,
+        "persistent": persistent,
+        "host": host,
+        "warning": None if persistent else
+        "SQLite is ephemeral on Railway — set DATABASE_URL on the API service to your Postgres to persist data across deploys.",
+    }
+
+
 # --- evals (CBE scorecard) ------------------------------------------------
 @router.get("/evals/latest")
 def evals_latest(db: Session = Depends(get_session)):
