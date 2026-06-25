@@ -14,7 +14,7 @@ from apps.api.freshness.engine import detect_supersession_staleness
 from apps.api.governance.policy import seed_default_policies
 from apps.api.graph.synthesis import synthesize
 from apps.api.resolver.resolver import lint_resolver, sync_resolver
-from apps.api.services.ingest import sync_default_sources
+from apps.api.services.ingest import sync_connected_sources, sync_default_sources
 
 
 def run_full_pipeline(db: Session, org_id: str | None = None) -> dict:
@@ -22,6 +22,7 @@ def run_full_pipeline(db: Session, org_id: str | None = None) -> dict:
     seed_default_policies(db, org_id)
 
     ingest = sync_default_sources(db, org_id)
+    ingest += sync_connected_sources(db, org_id)  # tenant-connected sources (OAuth/manual)
     extract = extract_pending(db, org_id)
     synth = synthesize(db, org_id)
 

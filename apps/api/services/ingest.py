@@ -104,3 +104,31 @@ def sync_default_sources(db: Session, org_id: str | None = None) -> list[dict]:
         results.append(sync_source(db, src, org_id=org_id))
     db.commit()
     return results
+
+
+def _default_keys() -> set[tuple[str, str]]:
+    return {(kind, name) for kind, name, *_ in _DEFAULT_SOURCES}
+
+
+def sync_connected_sources(db: Session, org_id: str | None = None) -> list[dict]:
+    """Sync every org source that isn't a bundled fixture — i.e. the ones a tenant
+    connected via /sources/connect or OAuth — and mirror each one's ACLs. Failures
+    are isolated per source (a bad token / down API can't break the whole pipeline)."""
+    org_id = org_id or get_settings().default_org_id
+    defaults = _default_keys()
+    results = []
+    for src in db.scalars(select(Source).where(Source.org_id == org_id)).all():
+        if (src.kind, src.name) in defaults:
+            continue
+        try:
+            res = sync_source(db, src, org_id=org_id)
+            from apps.api.access.seed import mirror_source_acls
+            from apps.api.services.connections import merged_source_config
+
+            mirror_source_acls(db, org_id, src, merged_source_config(db, org_id, src))
+            db.commit()  # persist each good source so a later failure can't undo it
+            results.append(res)
+        except Exception as e:  # noqa: BLE001 - one bad source must not fail the run
+            db.rollback()
+            results.append({"source": src.name, "kind": src.kind, "error": f"{type(e).__name__}: {e}"})
+    return results
