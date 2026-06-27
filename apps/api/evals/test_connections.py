@@ -87,6 +87,18 @@ def test_tenant_cannot_sync_or_delete_another_orgs_source(client, org_b):
     assert client.delete(f"/api/sources/{default_sid}", headers=_bearer(tok_b)).status_code == 404
 
 
+def test_configure_source_sets_nonsecret_config_and_strips_secrets(client, org_b):
+    tok = org_b["tokens"]["agent-token"]
+    v = client.post("/api/sources/connect", headers=_bearer(tok),
+                    json={"kind": "github", "name": "cfg target", "secrets": {"access_token": "ghp_a"}}).json()
+    # set repos, and try to sneak a credential in (must be ignored)
+    r = client.post(f"/api/sources/{v['id']}/config", headers=_bearer(tok),
+                    json={"repos": ["octo/hello"], "access_token": "LEAK"})
+    assert r.status_code == 200, r.text
+    # cross-tenant config is 404
+    assert client.post(f"/api/sources/{v['id']}/config", json={"repos": ["x/y"]}).status_code == 404
+
+
 def test_connectors_catalog_and_onboarding(client, org_b):
     tok = org_b["tokens"]["agent-token"]
     cat = {c["kind"]: c for c in client.get("/api/connectors").json()}

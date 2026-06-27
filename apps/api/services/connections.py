@@ -136,6 +136,23 @@ def sync_tenant_source(db: Session, org_id: str, source_id: str) -> dict:
     return result
 
 
+_SECRET_KEYS = {"access_token", "refresh_token", "api_key", "api_token", "dsn", "client_secret", "password"}
+
+
+def update_source_config(db: Session, org_id: str, source_id: str, patch: dict) -> dict:
+    """Merge non-secret config (e.g. repos, channels, max_issues) into a tenant's
+    source. Secret-looking keys are rejected — credentials only go through the vault."""
+    src = db.scalar(select(Source).where(Source.org_id == org_id, Source.id == source_id))
+    if not src:
+        return {"error": "not found"}
+    clean = {k: v for k, v in (patch or {}).items() if k not in _SECRET_KEYS}
+    cfg = dict(src.config_jsonb or {})
+    cfg.update(clean)
+    src.config_jsonb = cfg
+    db.commit()
+    return _source_view(db, src)
+
+
 def delete_tenant_source(db: Session, org_id: str, source_id: str) -> dict:
     src = db.scalar(select(Source).where(Source.org_id == org_id, Source.id == source_id))
     if not src:

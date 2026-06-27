@@ -17,6 +17,7 @@ from apps.api.services.connections import (
     list_connectors,
     onboarding_status,
     sync_tenant_source,
+    update_source_config,
 )
 
 router = APIRouter()
@@ -41,6 +42,16 @@ def sources_connect(body: ConnectBody, db: Session = Depends(get_session)):
                          config=body.config, secrets=body.secrets)
     if res.get("error"):
         raise HTTPException(status_code=400, detail=res["error"])
+    return res
+
+
+@router.post("/sources/{source_id}/config")
+def sources_config(source_id: str, body: dict, db: Session = Depends(get_session)):
+    """Set non-secret per-source settings (e.g. {"repos": ["owner/name"]} for GitHub,
+    {"channels": ["support"]} for Slack). Credentials are not accepted here."""
+    res = update_source_config(db, current_org(), source_id, body)
+    if res.get("error"):
+        raise HTTPException(status_code=404, detail="source not found in this tenant")
     return res
 
 
