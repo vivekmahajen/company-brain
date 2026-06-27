@@ -53,6 +53,18 @@ export const api = {
   evalsExtractionLive: () => req("/evals/extraction-live"),
   evalsFailures: (runId: string) => req(`/evals/runs/${runId}/failures`),
 
+  // Onboarding / connectors (Phase 2)
+  connectors: () => req("/connectors"),
+  onboarding: () => req("/onboarding"),
+  dbHealth: () => req("/health/db"),
+  connectSource: (body: { kind: string; name: string; config?: Record<string, unknown>; secrets?: Record<string, unknown> }) =>
+    req("/sources/connect", { method: "POST", body: JSON.stringify(body) }),
+  syncSource: (id: string) => req(`/sources/${id}/sync`, { method: "POST" }),
+  configureSource: (id: string, config: Record<string, unknown>) =>
+    req(`/sources/${id}/config`, { method: "POST", body: JSON.stringify(config) }),
+  deleteSource: (id: string) => req(`/sources/${id}`, { method: "DELETE" }),
+  connectAuthorize: (kind: string) => req(`/connect/${kind}/authorize`),
+
   // Access control (permissions)
   accessPrincipals: () => req("/access/principals"),
   viewAs: (token: string, task?: string) =>
