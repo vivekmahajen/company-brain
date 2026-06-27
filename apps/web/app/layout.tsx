@@ -18,6 +18,7 @@ const NAV = [
   { href: "/policies", label: "Policies" },
   { href: "/access", label: "Access" },
   { href: "/evals", label: "Evals" },
+  { href: "/billing", label: "Billing" },
   { href: "/review", label: "Review queue" },
 ];
 

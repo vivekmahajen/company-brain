@@ -53,6 +53,12 @@ export const api = {
   evalsExtractionLive: () => req("/evals/extraction-live"),
   evalsFailures: (runId: string) => req(`/evals/runs/${runId}/failures`),
 
+  // Billing / plans / usage (Phase 6)
+  usage: () => req("/usage"),
+  billingPlans: () => req("/billing/plans"),
+  changePlan: (plan: string) =>
+    req("/billing/plan", { method: "POST", body: JSON.stringify({ plan }) }),
+
   // Capabilities / custom templates (Phase 3)
   templates: () => req("/templates"),
   draftTemplate: (description: string) =>
