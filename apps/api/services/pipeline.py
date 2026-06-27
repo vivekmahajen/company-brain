@@ -7,7 +7,6 @@ from __future__ import annotations
 from sqlalchemy.orm import Session
 
 from apps.api.compiler.skill_compiler import compile_skill
-from apps.api.compiler.templates import SKILL_TEMPLATES
 from apps.api.config import get_settings
 from apps.api.extraction.extractor import extract_pending
 from apps.api.freshness.engine import detect_supersession_staleness
@@ -26,9 +25,12 @@ def run_full_pipeline(db: Session, org_id: str | None = None) -> dict:
     extract = extract_pending(db, org_id)
     synth = synthesize(db, org_id)
 
-    # Compile every capability that has knowledge (data-driven, not refund-only).
+    # Compile every capability that has knowledge (data-driven, not refund-only) —
+    # built-in templates plus any this tenant authored (Phase 3).
+    from apps.api.compiler.registry import get_templates
+
     skills = []
-    for topic in SKILL_TEMPLATES:
+    for topic in get_templates(db, org_id):
         s = compile_skill(db, org_id, topic)
         if s:
             skills.append({"slug": s.slug, "version": s.version, "status": s.status})

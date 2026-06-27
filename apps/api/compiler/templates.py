@@ -165,3 +165,11 @@ SKILL_TEMPLATES: dict[str, dict] = {
                      "broken", "impacted", "latency", "outages"],
     },
 }
+
+# Built-in document-level topic detection (extraction). Custom templates contribute
+# their own keywords per-org via compiler/registry.topic_keywords().
+BUILTIN_TOPIC_KEYWORDS: dict[str, tuple[str, ...]] = {
+    "refund": ("refund", "chargeback", "money back"),
+    "pricing": ("discount", "pricing", "price exception", "deal desk"),
+    "incident": ("incident", "outage", "on-call", "on call", "sev1", "sev 1", "post-mortem"),
+}

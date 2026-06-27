@@ -62,6 +62,26 @@ class Source(Base):
     last_synced_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
+class SkillTemplate(Base):
+    """A customer-authored capability shape (Phase 3). Built-in templates live in
+    code (compiler/templates.py, shared by all tenants); these are per-org additions
+    so a customer can define new skills without code. Merged with the built-ins by
+    compiler/registry.py."""
+    __tablename__ = "skill_template"
+    __table_args__ = (UniqueConstraint("org_id", "topic", name="uq_skill_template_topic"),)
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(String, index=True, nullable=False)
+    topic: Mapped[str] = mapped_column(String, nullable=False)
+    slug: Mapped[str] = mapped_column(String, nullable=False)
+    title: Mapped[str] = mapped_column(String, nullable=False)
+    description: Mapped[str] = mapped_column(Text, default="")
+    inputs_jsonb: Mapped[list] = mapped_column(JSON, default=list)
+    tools_jsonb: Mapped[list] = mapped_column(JSON, default=list)
+    intents_jsonb: Mapped[list] = mapped_column(JSON, default=list)
+    keywords_jsonb: Mapped[list] = mapped_column(JSON, default=list)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
 class SourceSecret(Base):
     """Encrypted connector credentials for a source (Phase 2). The ciphertext is
     produced by the vault; plaintext never touches the DB, logs, or config_jsonb."""

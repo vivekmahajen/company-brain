@@ -13,12 +13,10 @@ import os
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from apps.api.compiler.templates import SKILL_TEMPLATES
 from apps.api.config import get_settings
 from apps.api.llm.embeddings import cosine, embed
 from apps.api.models.tables import ResolverEntry, Skill
 
-_SLUG_TO_TMPL = {t["slug"]: t for t in SKILL_TEMPLATES.values()}
 
 
 def _calibrate(score: float) -> float:
@@ -39,7 +37,9 @@ def _latest_skills(db: Session, org_id: str) -> list[Skill]:
 
 
 def upsert_entry(db: Session, skill: Skill) -> ResolverEntry:
-    tmpl = _SLUG_TO_TMPL.get(skill.slug, {})
+    from apps.api.compiler.registry import slug_to_template
+
+    tmpl = slug_to_template(db, skill.org_id).get(skill.slug, {})
     intents = tmpl.get("intents", [skill.title])
     keywords = tmpl.get("keywords", skill.slug.split("-"))
     entry = db.scalar(

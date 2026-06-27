@@ -16,7 +16,6 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from apps.api.compiler.skill_compiler import compile_skill
-from apps.api.compiler.templates import SKILL_TEMPLATES
 from apps.api.extraction.extractor import extract_pending
 from apps.api.graph.synthesis import synthesize
 from apps.api.models.tables import Org
@@ -34,9 +33,11 @@ def refresh_tenant(db: Session, org_id: str, *, process: bool = True) -> dict:
     new = _new_artifacts(synced)
     out: dict = {"org_id": org_id, "synced": synced, "new_artifacts": new, "processed": False}
     if process and new > 0:
+        from apps.api.compiler.registry import get_templates
+
         out["extract"] = extract_pending(db, org_id)
         synthesize(db, org_id)
-        for topic in SKILL_TEMPLATES:
+        for topic in get_templates(db, org_id):
             compile_skill(db, org_id, topic)
         sync_resolver(db, org_id)
         out["processed"] = True

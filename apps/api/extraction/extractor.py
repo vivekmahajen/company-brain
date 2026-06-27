@@ -27,15 +27,15 @@ _TOPIC_KEYWORDS = {
 }
 
 
-def _detect_topic(text: str) -> str | None:
+def _detect_topic(text: str, keywords: dict | None = None) -> str | None:
     low = text.lower()
-    for topic, kws in _TOPIC_KEYWORDS.items():
+    for topic, kws in (keywords or _TOPIC_KEYWORDS).items():
         if any(k in low for k in kws):
             return topic
     return None
 
 
-def extract_artifact(db: Session, artifact: Artifact, *, llm=None) -> list[KnowledgeUnit]:
+def extract_artifact(db: Session, artifact: Artifact, *, llm=None, topic_keywords: dict | None = None) -> list[KnowledgeUnit]:
     llm = llm or get_llm()
     settings = get_settings()
 
@@ -46,7 +46,7 @@ def extract_artifact(db: Session, artifact: Artifact, *, llm=None) -> list[Knowl
 
     # Document-level topic so units that don't repeat the keyword (e.g. a
     # guardrail, a bare procedure step) still attach to the right capability.
-    doc_topic = _detect_topic(artifact.content_text)
+    doc_topic = _detect_topic(artifact.content_text, topic_keywords)
 
     resp = llm.complete_json(
         system=EXTRACTION_SYSTEM,
@@ -111,7 +111,10 @@ def _provider_cost_usd() -> float:
 
 def extract_pending(db: Session, org_id: str) -> dict:
     """Extract from all artifacts that have no KUs yet."""
+    from apps.api.compiler.registry import topic_keywords
+
     llm = get_llm()
+    tkw = topic_keywords(db, org_id)  # built-in + this tenant's custom topics
     artifacts = db.scalars(select(Artifact).where(Artifact.org_id == org_id)).all()
     existing_artifact_ids = {
         p.artifact_id for p in db.scalars(select(KUProvenance)).all()
@@ -122,7 +125,7 @@ def extract_pending(db: Session, org_id: str) -> dict:
     for art in artifacts:
         if art.id in existing_artifact_ids:
             continue
-        units = extract_artifact(db, art, llm=llm)
+        units = extract_artifact(db, art, llm=llm, topic_keywords=tkw)
         total_units += len(units)
         processed += 1
     db.commit()

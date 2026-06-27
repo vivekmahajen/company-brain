@@ -113,7 +113,9 @@ def _threshold_for(kus, action: str, kind: str) -> int | None:
 
 
 def compile_skill(db: Session, org_id: str, topic: str) -> Skill | None:
-    tmpl = SKILL_TEMPLATES.get(topic)
+    from apps.api.compiler.registry import get_templates
+
+    tmpl = get_templates(db, org_id).get(topic)
     if not tmpl:
         return None
     kus = _active_approved_kus(db, org_id, topic)

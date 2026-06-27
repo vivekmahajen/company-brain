@@ -14,7 +14,6 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from apps.api.compiler.skill_compiler import compile_skill
-from apps.api.compiler.templates import SKILL_TEMPLATES
 from apps.api.config import get_settings
 from apps.api.extraction.extractor import _detect_topic, extract_artifact
 from apps.api.graph.synthesis import synthesize
@@ -68,9 +67,12 @@ def add_text_knowledge(
 
     synthesize(db, org_id)
 
+    from apps.api.compiler.registry import get_templates
+
+    templates = get_templates(db, org_id)
     topic = _detect_topic(text)
     recompiled = []
-    topics = [topic] if topic in SKILL_TEMPLATES else list(SKILL_TEMPLATES)
+    topics = [topic] if topic in templates else list(templates)
     for t in topics:
         s = compile_skill(db, org_id, t)
         if s:
