@@ -34,15 +34,16 @@ def stripe_configured(plan: str) -> bool:
     return bool(get_settings().stripe_api_key) and bool(_price_id(plan))
 
 
-def seal(org_id: str, plan: str) -> str:
-    return get_vault().encrypt({"org": org_id, "plan": plan, "exp": int(time.time()) + _TTL})
+def seal(org_id: str, plan: str, success_url: str | None = None) -> str:
+    return get_vault().encrypt({"org": org_id, "plan": plan, "success_url": success_url,
+                                "exp": int(time.time()) + _TTL})
 
 
-def unseal(token: str) -> tuple[str, str]:
+def unseal(token: str) -> tuple[str, str, str | None]:
     d = get_vault().decrypt(token)  # raises on tamper
     if int(d.get("exp", 0)) < int(time.time()):
         raise ValueError("checkout token expired")
-    return d["org"], d["plan"]
+    return d["org"], d["plan"], d.get("success_url")
 
 
 def create_checkout(org_id: str, plan: str, *, success_url: str | None, cancel_url: str | None) -> dict:
@@ -68,18 +69,20 @@ def create_checkout(org_id: str, plan: str, *, success_url: str | None, cancel_u
         )
         return {"mode": "stripe", "url": session.url}
 
-    # stub: no Stripe configured → confirm endpoint applies the plan (no charge)
+    # stub: no Stripe configured → confirm endpoint applies the plan (no charge).
+    # success_url (the console) is sealed in so confirm can return the user there.
     base = (get_settings().oauth_redirect_base or "").rstrip("/")
-    return {"mode": "stub", "url": f"{base}/api/billing/checkout/confirm?state={seal(org_id, plan)}"}
+    return {"mode": "stub",
+            "url": f"{base}/api/billing/checkout/confirm?state={seal(org_id, plan, success_url)}"}
 
 
 def confirm_stub(db: Session, state: str) -> dict:
     """Apply a stub checkout (only valid when Stripe is NOT configured)."""
     if get_settings().stripe_api_key:
         return {"error": "stub checkout disabled while Stripe is configured"}
-    org_id, plan = unseal(state)
+    org_id, plan, success_url = unseal(state)
     set_plan(db, org_id, plan)
-    return {"confirmed": True, "org_id": org_id, "plan": plan}
+    return {"confirmed": True, "org_id": org_id, "plan": plan, "success_url": success_url}
 
 
 def handle_webhook(db: Session, event: dict) -> dict:

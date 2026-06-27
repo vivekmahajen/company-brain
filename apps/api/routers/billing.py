@@ -73,8 +73,11 @@ def checkout_confirm(state: str, db: Session = Depends(get_session)):
     res = confirm_stub(db, state)
     if res.get("error"):
         raise HTTPException(status_code=400, detail=res["error"])
-    base = (get_settings().oauth_redirect_base or "").rstrip("/")
-    return RedirectResponse(url=f"{base}/billing?upgraded={res['plan']}" if base else "/", status_code=302)
+    # Prefer the console URL the browser came from (sealed in state); never redirect
+    # to the API host's /billing (that page lives on the console, not here).
+    dest = res.get("success_url") or get_settings().oauth_success_redirect or "/"
+    sep = "&" if "?" in dest else "?"
+    return RedirectResponse(url=f"{dest}{sep}upgraded={res['plan']}", status_code=302)
 
 
 @router.post("/billing/webhook")

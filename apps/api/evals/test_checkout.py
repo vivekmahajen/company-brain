@@ -27,12 +27,15 @@ def _bearer(t):
 def test_stub_checkout_then_confirm_applies_plan(client):
     org = _org(client, "CheckoutCo")
     tok = org["tokens"]["agent-token"]
-    res = client.post("/api/billing/checkout", headers=_bearer(tok), json={"plan": "team"}).json()
+    res = client.post("/api/billing/checkout", headers=_bearer(tok),
+                      json={"plan": "team", "success_url": "https://console.example/billing"}).json()
     assert res["mode"] == "stub" and "/api/billing/checkout/confirm?state=" in res["url"]
 
-    # follow the stub confirm (no Stripe) → 302 + plan applied
+    # follow the stub confirm (no Stripe) → 302 back to the CONSOLE (not the API host)
     r = client.get(res["url"], follow_redirects=False)
     assert r.status_code == 302
+    assert r.headers["location"].startswith("https://console.example/billing")
+    assert "upgraded=team" in r.headers["location"]
     assert client.get("/api/usage", headers=_bearer(tok)).json()["plan"] == "team"
 
 
