@@ -35,6 +35,9 @@ def set_plan(db: Session, org_id: str, plan: str) -> dict:
         sub.updated_at = datetime.now(timezone.utc)
     else:
         db.add(Subscription(org_id=org_id, plan=plan))
+    from apps.api.audit.log import record_audit
+
+    record_audit(db, org_id, "billing.plan_change", actor="api", meta={"plan": plan})
     db.commit()
     return {"org_id": org_id, "plan": plan}
 

@@ -118,6 +118,10 @@ def connect_source(db: Session, org_id: str, *, kind: str, name: str,
     db.flush()
     if secrets:
         store_source_secret(db, org_id, src.id, secrets)
+    from apps.api.audit.log import record_audit
+
+    record_audit(db, org_id, "source.connect", actor="api", target_type="source", target_id=src.id,
+                 meta={"kind": kind, "name": name, "has_credentials": bool(secrets)})
     db.commit()
     return _source_view(db, src)
 
@@ -166,6 +170,9 @@ def delete_tenant_source(db: Session, org_id: str, source_id: str) -> dict:
     db.query(SourceSecret).filter(SourceSecret.org_id == org_id,
                                   SourceSecret.source_id == source_id).delete()
     db.delete(src)
+    from apps.api.audit.log import record_audit
+
+    record_audit(db, org_id, "source.delete", actor="api", target_type="source", target_id=source_id)
     db.commit()
     return {"deleted": source_id}
 

@@ -53,6 +53,11 @@ export const api = {
   evalsExtractionLive: () => req("/evals/extraction-live"),
   evalsFailures: (runId: string) => req(`/evals/runs/${runId}/failures`),
 
+  // Security & compliance (Phase 5)
+  audit: (limit = 100) => req(`/audit?limit=${limit}`),
+  exportData: () => req("/export"),
+  deleteOrg: () => req("/org/delete", { method: "POST", body: JSON.stringify({ confirm: true }) }),
+
   // Billing / plans / usage (Phase 6)
   usage: () => req("/usage"),
   billingPlans: () => req("/billing/plans"),

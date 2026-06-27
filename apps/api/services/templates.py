@@ -61,6 +61,10 @@ def create_template(db: Session, org_id: str, *, topic: str, title: str, descrip
         keywords_jsonb=[k.lower() for k in (keywords or [topic])],
     )
     db.add(row)
+    from apps.api.audit.log import record_audit
+
+    record_audit(db, org_id, "capability.create", actor="api", target_type="capability",
+                 target_id=topic, meta={"slug": slug})
     db.commit()
     return {"topic": topic, "slug": slug, "title": row.title, "custom": True,
             "next": "add knowledge for this topic, then it compiles into a skill"}

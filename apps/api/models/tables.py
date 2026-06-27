@@ -62,6 +62,21 @@ class Source(Base):
     last_synced_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
+class AuditEvent(Base):
+    """Security/compliance audit trail (Phase 5): who did what, when, to which target.
+    Append-only; tenant-scoped; exportable. Distinct from the visibility access-log
+    (which records per-read allow/deny decisions)."""
+    __tablename__ = "audit_event"
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(String, index=True, nullable=False)
+    actor: Mapped[str] = mapped_column(String, default="system")  # principal/role/token kind
+    action: Mapped[str] = mapped_column(String, nullable=False)   # e.g. source.connect
+    target_type: Mapped[str | None] = mapped_column(String)
+    target_id: Mapped[str | None] = mapped_column(String)
+    meta_jsonb: Mapped[dict] = mapped_column(JSON, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now, index=True)
+
+
 class Subscription(Base):
     """A tenant's billing plan (Phase 6). Separate table (not an Org column) so it's
     created by create_all without altering the existing org table on a live DB."""
