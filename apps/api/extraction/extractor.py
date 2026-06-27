@@ -12,7 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from apps.api.config import get_settings
-from apps.api.llm.base import Usage, get_llm
+from apps.api.llm.base import get_llm
 from apps.api.llm.embeddings import embed
 from apps.api.llm.prompts import EXTRACTION_SYSTEM
 from apps.api.models.tables import KU_TYPES, Artifact, KnowledgeUnit, KUProvenance
@@ -98,6 +98,17 @@ def extract_artifact(db: Session, artifact: Artifact, *, llm=None) -> list[Knowl
     return created
 
 
+def _provider_cost_usd() -> float:
+    """Process-wide model spend so far (0.0 on the fixture provider, which never
+    instantiates the real client). Used to attribute the extraction's real cost."""
+    try:
+        from apps.api.llm.anthropic_client import AnthropicClient
+
+        return AnthropicClient.TOTAL.cost_usd
+    except Exception:  # noqa: BLE001 - no anthropic client ⇒ no spend
+        return 0.0
+
+
 def extract_pending(db: Session, org_id: str) -> dict:
     """Extract from all artifacts that have no KUs yet."""
     llm = get_llm()
@@ -107,7 +118,7 @@ def extract_pending(db: Session, org_id: str) -> dict:
     }
     total_units = 0
     processed = 0
-    total_usage = Usage()
+    cost_before = _provider_cost_usd()
     for art in artifacts:
         if art.id in existing_artifact_ids:
             continue
@@ -115,4 +126,5 @@ def extract_pending(db: Session, org_id: str) -> dict:
         total_units += len(units)
         processed += 1
     db.commit()
-    return {"artifacts_processed": processed, "units_created": total_units, "cost_usd": total_usage.cost_usd}
+    return {"artifacts_processed": processed, "units_created": total_units,
+            "cost_usd": round(_provider_cost_usd() - cost_before, 6)}
