@@ -50,6 +50,10 @@ class Settings(BaseSettings):
     # and fails closed without it.
     actions_mode: str = Field(default="sandbox")
     stripe_api_key: str | None = Field(default=None)
+    # Stripe billing (Phase 6). Webhook signing secret; per-plan price ids are read
+    # from env STRIPE_PRICE_<PLAN> (e.g. STRIPE_PRICE_TEAM). Without a key, checkout
+    # runs in stub mode (self-serve switch, no charge) so the flow is demoable.
+    stripe_webhook_secret: str | None = Field(default=None)
     # Minutes a pending approval stays valid before expiring.
     approval_ttl_minutes: int = Field(default=1440)
 

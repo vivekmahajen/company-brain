@@ -58,6 +58,8 @@ export const api = {
   billingPlans: () => req("/billing/plans"),
   changePlan: (plan: string) =>
     req("/billing/plan", { method: "POST", body: JSON.stringify({ plan }) }),
+  checkout: (plan: string, success_url?: string) =>
+    req("/billing/checkout", { method: "POST", body: JSON.stringify({ plan, success_url }) }),
 
   // Capabilities / custom templates (Phase 3)
   templates: () => req("/templates"),

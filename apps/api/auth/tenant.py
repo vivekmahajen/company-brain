@@ -30,7 +30,8 @@ current_org_id: contextvars.ContextVar[str | None] = contextvars.ContextVar(
 
 # Paths that must work WITHOUT a resolved tenant even in strict mode: tenant
 # creation/listing, health, and API docs. (Prefix match.)
-_STRICT_ALLOWLIST = ("/api/orgs", "/health", "/docs", "/openapi.json", "/redoc")
+_STRICT_ALLOWLIST = ("/api/orgs", "/health", "/docs", "/openapi.json", "/redoc",
+                     "/api/billing/webhook", "/api/billing/checkout/confirm", "/api/connect/")
 
 
 def current_org() -> str:

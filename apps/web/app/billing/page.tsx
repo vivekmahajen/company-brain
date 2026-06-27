@@ -44,9 +44,17 @@ export default function BillingPage() {
     setBusy(key);
     setErr("");
     try {
-      const res = await api.changePlan(key);
-      if (res.error || res.detail) setErr(res.error || res.detail);
-      else await load();
+      const res = await api.checkout(key, typeof window !== "undefined" ? `${window.location.origin}/billing` : undefined);
+      if (res.error || res.detail) {
+        setErr(res.error || res.detail);
+      } else if (res.mode === "stripe" || res.mode === "stub") {
+        window.location.href = res.url; // → Stripe Checkout (or stub confirm)
+        return;
+      } else if (res.mode === "contact") {
+        setErr("Enterprise is custom-priced — contact sales.");
+      } else {
+        await load(); // 'direct' (free downgrade) applied
+      }
     } finally {
       setBusy("");
     }
