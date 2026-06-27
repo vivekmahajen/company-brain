@@ -53,6 +53,14 @@ export const api = {
   evalsExtractionLive: () => req("/evals/extraction-live"),
   evalsFailures: (runId: string) => req(`/evals/runs/${runId}/failures`),
 
+  // Capabilities / custom templates (Phase 3)
+  templates: () => req("/templates"),
+  draftTemplate: (description: string) =>
+    req("/templates/draft", { method: "POST", body: JSON.stringify({ description }) }),
+  createTemplate: (body: Record<string, unknown>) =>
+    req("/templates", { method: "POST", body: JSON.stringify(body) }),
+  deleteTemplate: (topic: string) => req(`/templates/${topic}`, { method: "DELETE" }),
+
   // Onboarding / connectors (Phase 2)
   connectors: () => req("/connectors"),
   onboarding: () => req("/onboarding"),

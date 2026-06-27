@@ -57,6 +57,20 @@ def test_validation_rejects_builtin_topic_and_duplicates(client, org_b):
                        json={"topic": "vendor_invoice", "title": "y"}).status_code == 400
 
 
+def test_draft_then_create_from_description(client, org_b):
+    tok = org_b["tokens"]["agent-token"]
+    d = client.post("/api/templates/draft", headers=_bearer(tok),
+                    json={"description": "Approve a vendor refund credit and notify billing"}).json()
+    assert d["topic"] and d["title"]
+    assert d["keywords"] and d["intents"]
+    # the draft is editable, then created like any template (rename topic to avoid clashes)
+    d["topic"] = "refund_credit"
+    r = client.post("/api/templates", headers=_bearer(tok), json=d)
+    assert r.status_code == 200, r.text
+    topics = {t["topic"] for t in client.get("/api/templates", headers=_bearer(tok)).json()}
+    assert "refund_credit" in topics
+
+
 def test_custom_topic_drives_extraction_topic_detection(seeded, db):
     org = create_org(db, name="DetectCo")["id"]
     create_template(db, org, topic="vendor_invoice", title="Approve a vendor invoice",

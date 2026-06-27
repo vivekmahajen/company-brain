@@ -61,6 +61,78 @@ def create_template(db: Session, org_id: str, *, topic: str, title: str, descrip
             "next": "add knowledge for this topic, then it compiles into a skill"}
 
 
+_DRAFT_RUBRIC = (
+    "You design a capability template for a company-operations 'skill'. Given a one-line "
+    "description of a workflow, return JSON with these fields:\n"
+    '{"topic": "<snake_case identifier>", "title": "<short imperative title>", '
+    '"description": "<one sentence>", "inputs": ["name (type, required|optional)", ...], '
+    '"tools": [{"name": "<verb_noun>", "side_effecting": true, "approval_for_action": '
+    '"manager_approval"|null, "approval_field": "<input field>"|null, "threshold_kind": '
+    '"amount"|"percent"|"days"|null}], "intents": ["<natural phrasing>", ...], '
+    '"keywords": ["<routing keyword>", ...]}\n'
+    "Keep it minimal and realistic. JSON only."
+)
+
+_STOP = {"the", "a", "an", "to", "of", "for", "and", "or", "when", "with", "that", "this",
+         "request", "requests", "handle", "process", "manage", "our", "their", "any", "is", "are"}
+
+
+def _heuristic_draft(desc: str) -> dict:
+    words = [w.strip(".,;:!?").lower() for w in desc.split()]
+    sig = [w for w in words if len(w) > 3 and w not in _STOP and w.isalpha()]
+    topic = (sig[0] if sig else "capability")
+    title = desc.strip().rstrip(".")[:60] or f"Handle {topic}"
+    return {
+        "topic": re.sub(r"[^a-z0-9]+", "_", topic),
+        "title": title[0].upper() + title[1:] if title else title,
+        "description": desc.strip(),
+        "inputs": [],
+        "tools": [],
+        "intents": [desc.strip()],
+        "keywords": sig[:6] or [topic],
+        "drafted_by": "heuristic",
+    }
+
+
+def _normalize_draft(d: dict, desc: str) -> dict:
+    base = _heuristic_draft(desc)
+    return {
+        "topic": re.sub(r"[^a-z0-9]+", "_", str(d.get("topic") or base["topic"]).lower()).strip("_"),
+        "title": str(d.get("title") or base["title"]),
+        "description": str(d.get("description") or desc.strip()),
+        "inputs": d.get("inputs") if isinstance(d.get("inputs"), list) else [],
+        "tools": d.get("tools") if isinstance(d.get("tools"), list) else [],
+        "intents": d.get("intents") if isinstance(d.get("intents"), list) else [desc.strip()],
+        "keywords": [str(k).lower() for k in (d.get("keywords") or base["keywords"]) if k],
+        "drafted_by": "model",
+    }
+
+
+def draft_template(description: str) -> dict:
+    """Draft a capability template from a one-line description. Uses the real model
+    when LLM_PROVIDER=anthropic; otherwise a deterministic heuristic (offline). The
+    draft is NOT saved — the caller reviews and POSTs it to create."""
+    from apps.api.config import get_settings
+
+    desc = (description or "").strip()
+    if not desc:
+        return {"error": "description is required"}
+    draft = _heuristic_draft(desc)
+    if get_settings().llm_provider.lower() == "anthropic":
+        try:
+            from apps.api.llm.base import get_llm
+
+            r = get_llm().complete_json(system=_DRAFT_RUBRIC, prompt=desc,
+                                        model=get_settings().model_extract)
+            if isinstance(r.data, dict) and r.data.get("topic") and r.data.get("title"):
+                draft = _normalize_draft(r.data, desc)
+        except Exception:  # noqa: BLE001 - fall back to the heuristic draft
+            pass
+    if draft["topic"] in BUILTIN_TOPICS:
+        draft["topic"] = f"{draft['topic']}_custom"
+    return draft
+
+
 def delete_template(db: Session, org_id: str, topic: str) -> dict:
     row = db.scalar(select(SkillTemplate).where(
         SkillTemplate.org_id == org_id, SkillTemplate.topic == topic.lower()))
