@@ -103,6 +103,11 @@ def connect_source(db: Session, org_id: str, *, kind: str, name: str,
     credentials go to the vault. Returns the source view (never the secrets)."""
     if kind not in REGISTRY:
         return {"error": f"unknown connector kind: {kind}", "known": sorted(REGISTRY)}
+    from apps.api.billing.quota import check_quota
+
+    ok, reason = check_quota(db, org_id, "source")
+    if not ok:
+        return {"error": reason, "quota": True}
     cfg = dict(config or {})
     # Label the source: real credentials → live; a fixture_path → fixture; otherwise
     # live (awaiting credentials). Purely informational — the connector uses whatever

@@ -41,7 +41,7 @@ def sources_connect(body: ConnectBody, db: Session = Depends(get_session)):
     res = connect_source(db, current_org(), kind=body.kind, name=body.name,
                          config=body.config, secrets=body.secrets)
     if res.get("error"):
-        raise HTTPException(status_code=400, detail=res["error"])
+        raise HTTPException(status_code=402 if res.get("quota") else 400, detail=res["error"])
     return res
 
 

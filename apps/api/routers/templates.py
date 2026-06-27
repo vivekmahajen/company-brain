@@ -54,7 +54,7 @@ def templates_create(body: TemplateBody, db: Session = Depends(get_session)):
                           description=body.description, inputs=body.inputs, tools=body.tools,
                           intents=body.intents, keywords=body.keywords, slug=body.slug)
     if res.get("error"):
-        raise HTTPException(status_code=400, detail=res["error"])
+        raise HTTPException(status_code=402 if res.get("quota") else 400, detail=res["error"])
     return res
 
 

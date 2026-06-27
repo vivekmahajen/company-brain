@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from apps.api.config import get_settings
 from apps.api.models.db import init_db
-from apps.api.routers import approvals, brain, connections, oauth, orgs, templates
+from apps.api.routers import approvals, billing, brain, connections, oauth, orgs, templates
 
 logger = logging.getLogger("company_brain")
 
@@ -110,6 +110,7 @@ app.include_router(orgs.router, prefix="/api")
 app.include_router(connections.router, prefix="/api")
 app.include_router(oauth.router, prefix="/api")
 app.include_router(templates.router, prefix="/api")
+app.include_router(billing.router, prefix="/api")
 app.include_router(brain.router, prefix="/api")
 app.include_router(approvals.router, prefix="/api")
 

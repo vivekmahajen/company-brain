@@ -20,7 +20,11 @@ def client(seeded):
 
 @pytest.fixture(scope="module")
 def org_b(client):
-    return client.post("/api/orgs", json={"name": "Globex"}).json()
+    org = client.post("/api/orgs", json={"name": "Globex"}).json()
+    # this module connects several sources; use a plan that isn't quota-limited
+    client.post("/api/billing/plan", headers={"Authorization": f"Bearer {org['tokens']['agent-token']}"},
+                json={"plan": "business"})
+    return org
 
 
 def _bearer(t: str) -> dict:

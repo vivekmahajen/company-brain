@@ -110,8 +110,15 @@ def _provider_cost_usd() -> float:
 
 
 def extract_pending(db: Session, org_id: str) -> dict:
-    """Extract from all artifacts that have no KUs yet."""
+    """Extract from all artifacts that have no KUs yet. Metered + budget-guarded:
+    skips extraction when the tenant is over its monthly extraction budget (Phase 6)."""
+    from apps.api.billing.metering import record_usage
+    from apps.api.billing.quota import check_quota
     from apps.api.compiler.registry import topic_keywords
+
+    ok, reason = check_quota(db, org_id, "extraction")
+    if not ok:
+        return {"artifacts_processed": 0, "units_created": 0, "cost_usd": 0.0, "over_budget": reason}
 
     llm = get_llm()
     tkw = topic_keywords(db, org_id)  # built-in + this tenant's custom topics
@@ -128,6 +135,8 @@ def extract_pending(db: Session, org_id: str) -> dict:
         units = extract_artifact(db, art, llm=llm, topic_keywords=tkw)
         total_units += len(units)
         processed += 1
+    cost = round(_provider_cost_usd() - cost_before, 6)
+    if cost > 0:
+        record_usage(db, org_id, "extraction", cost_usd=cost)
     db.commit()
-    return {"artifacts_processed": processed, "units_created": total_units,
-            "cost_usd": round(_provider_cost_usd() - cost_before, 6)}
+    return {"artifacts_processed": processed, "units_created": total_units, "cost_usd": cost}

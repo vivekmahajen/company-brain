@@ -62,6 +62,31 @@ class Source(Base):
     last_synced_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
+class Subscription(Base):
+    """A tenant's billing plan (Phase 6). Separate table (not an Org column) so it's
+    created by create_all without altering the existing org table on a live DB."""
+    __tablename__ = "subscription"
+    __table_args__ = (UniqueConstraint("org_id", name="uq_subscription_org"),)
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(String, index=True, nullable=False)
+    plan: Mapped[str] = mapped_column(String, default="free")  # free|team|business|enterprise
+    stripe_customer_id: Mapped[str | None] = mapped_column(String)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
+class UsageEvent(Base):
+    """A metered usage event (Phase 6) — e.g. extraction spend per tenant per period.
+    Aggregated for billing/quota; the real model cost is captured here."""
+    __tablename__ = "usage_event"
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(String, index=True, nullable=False)
+    kind: Mapped[str] = mapped_column(String, nullable=False)  # extraction|sync|...
+    quantity: Mapped[float] = mapped_column(Float, default=1.0)
+    cost_usd: Mapped[float] = mapped_column(Float, default=0.0)
+    period: Mapped[str] = mapped_column(String, index=True)  # "YYYY-MM"
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
 class SkillTemplate(Base):
     """A customer-authored capability shape (Phase 3). Built-in templates live in
     code (compiler/templates.py, shared by all tenants); these are per-org additions

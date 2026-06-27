@@ -40,6 +40,11 @@ def create_template(db: Session, org_id: str, *, topic: str, title: str, descrip
     topic = (topic or "").strip().lower()
     if not topic or not title.strip():
         return {"error": "topic and title are required"}
+    from apps.api.billing.quota import check_quota
+
+    ok, reason = check_quota(db, org_id, "capability")
+    if not ok:
+        return {"error": reason, "quota": True}
     if topic in BUILTIN_TOPICS:
         return {"error": f"'{topic}' is a built-in topic — choose a different name"}
     if db.scalar(select(SkillTemplate).where(SkillTemplate.org_id == org_id, SkillTemplate.topic == topic)):
