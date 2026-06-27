@@ -63,6 +63,8 @@ class Settings(BaseSettings):
     # header) is rejected 401 instead of falling back to the default org. Keep
     # False for the single-tenant demo; flip True for a real multi-tenant deploy.
     multi_tenant_strict: bool = Field(default=False)
+    # Per-credential request cap per minute. 0 disables (default). Reliability (Phase 7).
+    rate_limit_per_min: int = Field(default=0)
     # Optional shared secret gating tenant creation (POST /api/orgs). When set,
     # the caller must send it as `X-Admin-Token`. When unset, creation is open
     # (fine for the demo; set it before exposing the product publicly).
