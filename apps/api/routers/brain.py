@@ -224,6 +224,28 @@ def knowledge_add(body: AddKnowledgeBody, db: Session = Depends(get_session)):
     return add_text_knowledge(db, _org(), text=body.text, source_name=body.source_name)
 
 
+@router.get("/health/llm")
+def health_llm():
+    """Which LLM provider is active, and is the key present? Confirms a switch to
+    anthropic took effect. The key value is never returned — only whether it's set."""
+    from apps.api.config import get_settings
+
+    s = get_settings()
+    provider = s.llm_provider.lower()
+    key_present = bool(s.anthropic_api_key)
+    ready = provider != "anthropic" or key_present
+    return {
+        "provider": provider,                       # 'fixture' | 'anthropic'
+        "anthropic_key_present": key_present,
+        "model_extract": s.model_extract,
+        "model_classify": s.model_classify,
+        "ready": ready,                             # False = anthropic selected but no key (fails closed)
+        "cost_mode": "paid (real model)" if provider == "anthropic" else "free (offline fixture)",
+        "warning": None if ready else
+        "LLM_PROVIDER=anthropic but ANTHROPIC_API_KEY is missing — extraction will fail closed.",
+    }
+
+
 @router.get("/health/db")
 def health_db():
     """Which database is the running app actually using? Confirms persistence at a
