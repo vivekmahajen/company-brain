@@ -1,7 +1,7 @@
 """REST mirror of the agent + console surface."""
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -39,6 +39,24 @@ def _org() -> str:
 @router.post("/pipeline/run")
 def pipeline_run(db: Session = Depends(get_session)):
     return run_full_pipeline(db, _org())
+
+
+@router.post("/admin/refresh")
+def admin_refresh(
+    process: bool = True,
+    db: Session = Depends(get_session),
+    x_admin_token: str | None = Header(default=None),
+):
+    """Background refresh for ALL tenants: re-sync connected sources and re-process
+    only the tenants where new artifacts landed (cost guard). Wire this to a Railway
+    cron. Admin-gated when ADMIN_TOKEN is set. `process=false` = sync only (free)."""
+    from apps.api.config import get_settings
+    from apps.api.scheduler import refresh_all_tenants
+
+    configured = get_settings().admin_token
+    if configured and x_admin_token != configured:
+        raise HTTPException(status_code=403, detail="invalid or missing X-Admin-Token")
+    return refresh_all_tenants(db, process=process)
 
 
 @router.post("/admin/reseed-serving")
