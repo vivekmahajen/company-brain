@@ -25,6 +25,7 @@ type Draft = {
 
 export default function CapabilitiesPage() {
   const [templates, setTemplates] = useState<Template[]>([]);
+  const [packs, setPacks] = useState<any[]>([]);
   const [desc, setDesc] = useState("");
   const [draft, setDraft] = useState<Draft | null>(null);
   const [err, setErr] = useState("");
@@ -33,10 +34,18 @@ export default function CapabilitiesPage() {
   async function load() {
     try {
       setTemplates(await api.templates());
+      setPacks(await api.packs().catch(() => []));
       setErr("");
     } catch {
       setErr("API unreachable.");
     }
+  }
+
+  async function install(id: string) {
+    setErr("");
+    const res = await api.installPack(id);
+    if (res.error || res.detail) setErr(res.error || res.detail);
+    await load();
   }
   useEffect(() => {
     load();
@@ -147,6 +156,30 @@ export default function CapabilitiesPage() {
           </div>
         )}
       </section>
+
+      {/* Capability packs */}
+      {packs.length > 0 && (
+        <section>
+          <h2 className="mb-2 text-lg font-medium">Capability packs</h2>
+          <div className="grid grid-cols-3 gap-3">
+            {packs.map((p) => (
+              <div key={p.id} className="rounded-lg border border-neutral-800 p-4">
+                <div className="font-medium">{p.label}</div>
+                <div className="mt-1 text-xs text-neutral-500">{p.description}</div>
+                <ul className="mt-2 space-y-0.5 text-xs text-neutral-400">
+                  {p.capabilities.map((c: string) => <li key={c}>• {c}</li>)}
+                </ul>
+                <button
+                  onClick={() => install(p.id)}
+                  className="mt-3 w-full rounded border border-neutral-700 px-3 py-1.5 text-sm hover:bg-neutral-800"
+                >
+                  Install pack
+                </button>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Existing capabilities */}
       <section>

@@ -66,6 +66,11 @@ export const api = {
   checkout: (plan: string, success_url?: string) =>
     req("/billing/checkout", { method: "POST", body: JSON.stringify({ plan, success_url }) }),
 
+  // GTM (Phase 8): scorecard + capability packs
+  scorecard: () => req("/scorecard"),
+  packs: () => req("/packs"),
+  installPack: (id: string) => req(`/packs/${id}/install`, { method: "POST" }),
+
   // Capabilities / custom templates (Phase 3)
   templates: () => req("/templates"),
   draftTemplate: (description: string) =>
